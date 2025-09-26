@@ -7,6 +7,7 @@
     ]"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
+    @click="onClick"
   >
     <span class="mr-2 text-lg select-none text-yellow-400" style="color:#facc15 !important;">
       ⇅
@@ -22,6 +23,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+const emits = defineEmits(['click-item'])
 const props = defineProps({
   node: {
     type: Object,
@@ -31,6 +33,11 @@ const props = defineProps({
 const isHovered = ref(false)
 // Only show 'modified' files, so label is always '수정됨'
 const statusLabel = '수정됨'
+
+function onClick() {
+    console.log('SaveNode clicked:', props.node);
+  emits('click-item', props.node);
+}
 </script>
 
 <style scoped>

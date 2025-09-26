@@ -1,28 +1,54 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, provide } from 'vue'
 import TreeView from './components/menu/TreeView.vue'
 import MonacoEditor from './components/MonacoEditor.vue'
 import GitHubAPI from './http/git-hub-api'
 
-const treeData = ref([
-  {
-    id: 1,
-    label: 'Root',
-    children: [
-      { id: 2, label: 'Child 1' },
-      { id: 3, label: 'Child 2', children: [{ id: 4, label: 'Subchild' }] }
-    ]
-  },
+const treeData = ref([])
+const selectedFile = ref({ decodeData: '' })
+provide('selectedFile', selectedFile)
+const currentEditorType = ref('javascript'); // Default to JavaScript
+const currentItem = ref({ path: '왼쪽 트리에서 파일을 선택하세요.' });
+const saveNodes = ref([])
+let editorInstance = null;
 
-  {
-    id: 1,
-    label: 'Root',
-    children: [
-      { id: 2, label: 'Child 1' },
-      { id: 3, label: 'Child 2', children: [{ id: 4, label: 'Subchild' }] }
-    ]
+function onChangeItem(payload) {
+  selectedFile.value = {};
+
+  console.log('AppChanged node:', payload);
+  if(payload.type === 'blob') {
+    currentItem.value = payload;
+    console.log('555', saveNodes.value.findIndex(item => item.path === payload.path) !== -1)
+    if(saveNodes.value.findIndex(item => item.path === payload.path) !== -1) {
+      selectedFile.value = saveNodes.value.find(item => item.path === payload.path);
+    } else {
+      GitHubAPI.getContent({ filePath: payload.path, branch: 'main'})
+        .then(response => {
+          selectedFile.value = {
+            ...response.data,
+            decodeData: atob(response.data.content), 
+          }; // Decode base64 content
+        })
+        .catch(error => {
+          selectedFile.value = {};
+        });
+      }
+      currentEditorType.value = payload.path.endsWith('.js') ? 'javascript' :
+                                payload.path.endsWith('.vue') ? 'html' :
+                                payload.path.endsWith('.css') ? 'css' :
+                                'plaintext'; // Default to plaintext if no match
   }
-])
+}
+
+function onClickItem(node) {
+  selectedFile.value = {...node}
+}
+
+function onChangeValue(newVal) {
+  selectedFile.value = newVal;
+  if(saveNodes.value.findIndex(item => item.path === currentItem.value.path) === -1)
+    saveNodes.value.push({ ...selectedFile.value, status: 'modified' });
+}
 
 onMounted(() => {
   // Example API call to verify setup
@@ -41,10 +67,18 @@ onMounted(() => {
   <div class="flex w-full h-screen min-h-screen">
     <aside class="w-[260px] px-[10px] bg-[#23272e] flex-shrink-0 flex flex-col">
       <h2>Hello Jenkins!</h2>
-      <TreeView :nodes="treeData" />
+      <TreeView 
+        :nodes="treeData" 
+        :save-nodes="saveNodes"
+        @change-item="onChangeItem"
+        @click-item="onClickItem"
+        />
     </aside>
-  <main class="min-w-0 h-full bg-[#1e1e1e]">
-      <MonacoEditor />
+  <main class="min-w-0 h-full ">
+      <div class="p-[10px] text-gray-200">
+        {{ currentItem.path.indexOf('/') ? currentItem.path.replaceAll('/', ' > ') : currentItem.path }}
+      </div>
+  <MonacoEditor v-model="selectedFile.decodeData" :language="currentEditorType" @changeValue="onChangeValue" class="bg-[#1e1e1e] p-[5px] pt-[20px]"/>
     </main>
   </div>
 </template>
