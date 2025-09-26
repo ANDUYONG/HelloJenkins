@@ -4,16 +4,16 @@
       :class="[{ 'bg-[#1e1e1e]': !isHovered, 'bg-[#23272e]': isHovered }]"
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"
+      @click.stop="toggle"
     >
       <div class="flex items-center px-3 py-2 cursor-pointer select-none">
         <span
           v-if="hasChildren"
-          @click.stop="toggle"
           class="mr-[5px] text-xs text-gray-400 hover:text-blue-400 transition-colors duration-200"
         >
           {{ expanded ? '-' : '+' }}
         </span>
-        <span class="text-gray-200 group-hover:text-blue-400 transition-colors duration-200">{{ node.label }}</span>
+        <span class="text-gray-200 group-hover:text-blue-400 transition-colors duration-200">{{ node.fileName }}</span>
       </div>
       <ul v-if="hasChildren && expanded" class="ml-4 border-l border-gray-700 pl-2">
         <TreeNode

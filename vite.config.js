@@ -19,5 +19,15 @@ export default defineConfig(async () => {
         '@': fileURLToPath(new URL('./src', import.meta.url))
       },
     },
+    server: {
+      port: 3000, // 원하는 포트로 변경 가능
+        proxy: {
+        '/api': {
+            target: 'http://localhost:8080',
+            changeOrigin: true,
+            rewrite: path => path.replace(/^\/api/, '/api'),
+          },
+        },
+    },
   }
 })

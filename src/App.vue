@@ -1,7 +1,10 @@
 <script setup>
+import { ref, onMounted } from 'vue'
 import TreeView from './components/menu/TreeView.vue'
 import MonacoEditor from './components/MonacoEditor.vue'
-const treeData = [
+import GitHubAPI from './http/git-hub-api'
+
+const treeData = ref([
   {
     id: 1,
     label: 'Root',
@@ -19,7 +22,19 @@ const treeData = [
       { id: 3, label: 'Child 2', children: [{ id: 4, label: 'Subchild' }] }
     ]
   }
-]
+])
+
+onMounted(() => {
+  // Example API call to verify setup
+  GitHubAPI.getTreeList()
+    .then(response => {
+      console.log('API Response:', response.data)
+      treeData.value = response.data.tree; // Assuming response.data is in the correct format
+    })
+    .catch(error => {
+      console.error('API Error:', error)
+    })
+})
 </script>
 
 <template>
