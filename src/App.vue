@@ -15,10 +15,8 @@ let editorInstance = null;
 function onChangeItem(payload) {
   selectedFile.value = {};
 
-  console.log('AppChanged node:', payload);
   if(payload.type === 'blob') {
     currentItem.value = payload;
-    console.log('555', saveNodes.value.findIndex(item => item.path === payload.path) !== -1)
     if(saveNodes.value.findIndex(item => item.path === payload.path) !== -1) {
       selectedFile.value = saveNodes.value.find(item => item.path === payload.path);
     } else {
@@ -54,7 +52,6 @@ onMounted(() => {
   // Example API call to verify setup
   GitHubAPI.getTreeList()
     .then(response => {
-      console.log('API Response:', response.data)
       treeData.value = response.data.tree; // Assuming response.data is in the correct format
     })
     .catch(error => {

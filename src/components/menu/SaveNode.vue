@@ -35,7 +35,6 @@ const isHovered = ref(false)
 const statusLabel = '수정됨'
 
 function onClick() {
-    console.log('SaveNode clicked:', props.node);
   emits('click-item', props.node);
 }
 </script>

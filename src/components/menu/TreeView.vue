@@ -47,9 +47,6 @@ function onChangeItem(payload) {
 }
 
 function onClickItem(node) {
-  console.log('TreeView clicked node:', node);
-  console.log('TreeView clicked node:2 ', props.nodes.flatMap(x => x).find(n => n.path === node.path));
-
   let changeItem = props.nodes.find(n => n.path === node.path);
   if(!changeItem) {
     changeItem = props.nodes.map(x => x.children).flatMap(x => x).find(n => n.path === node.path);
@@ -63,11 +60,6 @@ function onClickItem(node) {
 function onAlert() {
   if(confirm('[저장 후 배포]하시겠습니까?')) {
     isProgressVisible.value = true;
-    // Simulate a delay for demonstration purposes
-    // setTimeout(() => {
-    //   isProgressVisible.value = false;
-    //   alert('배포가 완료되었습니다.');
-    // }, 3000); // 3 seconds delay
   }
 }
 </script>
