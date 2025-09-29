@@ -33,6 +33,7 @@ function onChangeItem(payload) {
       }
       currentEditorType.value = payload.path.endsWith('.js') ? 'javascript' :
                                 payload.path.endsWith('.vue') ? 'html' :
+                                payload.path.endsWith('.html') ? 'html' :
                                 payload.path.endsWith('.css') ? 'css' :
                                 'plaintext'; // Default to plaintext if no match
   }
@@ -44,8 +45,19 @@ function onClickItem(node) {
 
 function onChangeValue(newVal) {
   selectedFile.value = newVal;
+
+  console.log('saveNodes' , saveNodes.value)
   if(saveNodes.value.findIndex(item => item.path === currentItem.value.path) === -1)
     saveNodes.value.push({ ...selectedFile.value, status: 'modified' });
+}
+
+function onCommit() {
+  const saveData = saveNodes.value.map(item => {
+    return {
+      ...item,
+      encodedData: btoa(item.decodeData) // Encode to base64
+    }
+  })
 }
 
 onMounted(() => {
@@ -71,11 +83,11 @@ onMounted(() => {
         @click-item="onClickItem"
         />
     </aside>
-  <main class="min-w-0 h-full ">
+    <main class="min-w-0 h-full ">
       <div class="p-[10px] text-gray-200">
         {{ currentItem.path.indexOf('/') ? currentItem.path.replaceAll('/', ' > ') : currentItem.path }}
       </div>
-  <MonacoEditor v-model="selectedFile.decodeData" :language="currentEditorType" @changeValue="onChangeValue" class="bg-[#1e1e1e] p-[5px] pt-[20px]"/>
+      <MonacoEditor v-model="selectedFile.decodeData" :language="currentEditorType" @changeValue="onChangeValue" class="bg-[#1e1e1e] p-[5px] pt-[20px]"/>
     </main>
   </div>
 </template>
