@@ -33,7 +33,7 @@ pipline {
 		stage('Deploy') {
 			steps {
 				echo '배포 스크립트 실행'
-				# 예: 로컬 서버에서 확인
+				// 예: 로컬 서버에서 확인
 				sh 'rm -rf /Users/duyong/프로젝트/HelloJenkins/deploy/frontend/*'
 				sh 'cp -r dist/* /Users/duyong/프로젝트/HelloJenkins/deploy/frontend'
 
