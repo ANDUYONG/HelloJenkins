@@ -72,7 +72,7 @@ function onCommit() {
         return {
           ...item,
           message: message.value,
-          encodedData: btoa(item.decodeData) // Encode to base64
+          encodedData: btoa(item.decodeData) // Encode to base64 test
         }
       })
       GitHubAPI.commitContent(saveData).then(response => {
