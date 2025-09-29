@@ -11,7 +11,7 @@
     <div class="flex-shrink-0 w-[300px] h-[200px] mx-auto mt-2">
       <SaveView 
         :nodes="saveNodes" 
-        @commit-deploy="onAlert"
+        @commit-deploy="onCommit"
         @click-item="onClickItem"
       />
     </div>
@@ -23,9 +23,13 @@
 import TreeNode from './TreeNode.vue'
 import SaveView from './SaveView.vue'
 import Progress from '../dialog/Progress.vue'
-import { ref } from 'vue'
+import { ref, provide } from 'vue'
+import GitHubAPI from '@/http/git-hub-api'
 
 const emits = defineEmits(['change-item', 'click-item'])
+
+const message = ref('')
+provide('message', message)
 
 const props = defineProps({
   nodes: {
@@ -41,9 +45,7 @@ const props = defineProps({
 const isProgressVisible = ref(false);
 
 function onChangeItem(payload) {
-  console.log('TreeViewToggled node:', payload.node, 'Expanded:', payload.expanded);
   emits('change-item', payload.node);
-  // You can add additional logic here to handle the toggle event
 }
 
 function onClickItem(node) {
@@ -57,9 +59,30 @@ function onClickItem(node) {
   // You can add additional logic here to handle the toggle event
 }
 
-function onAlert() {
+function onCommit() {
+  if(message.value.length === 0) {
+    return alert('커밋 메세지를 입력하세요.')
+  }
+  else if(props.saveNodes.length === 0) {
+    return alert('수정된 파일이 없습니다.')
+  }
+
   if(confirm('[저장 후 배포]하시겠습니까?')) {
-    isProgressVisible.value = true;
+      const saveData = props.saveNodes.map(item => {
+        return {
+          ...item,
+          message: message.value,
+          encodedData: btoa(item.decodeData) // Encode to base64
+        }
+      })
+      GitHubAPI.commitContent(saveData).then(response => {
+        alert('커밋 및 배포가 완료되었습니다.');
+        isProgressVisible.value = true;
+      })
+      .catch(error => {
+        alert('커밋 및 배포 중 오류가 발생했습니다. 다시 시도해주세요.');
+      });
+
   }
 }
 </script>

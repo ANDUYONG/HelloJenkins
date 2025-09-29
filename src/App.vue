@@ -5,8 +5,10 @@ import MonacoEditor from './components/MonacoEditor.vue'
 import GitHubAPI from './http/git-hub-api'
 
 const treeData = ref([])
+
 const selectedFile = ref({ decodeData: '' })
 provide('selectedFile', selectedFile)
+
 const currentEditorType = ref('javascript'); // Default to JavaScript
 const currentItem = ref({ path: '왼쪽 트리에서 파일을 선택하세요.' });
 const saveNodes = ref([])
@@ -20,7 +22,7 @@ function onChangeItem(payload) {
     if(saveNodes.value.findIndex(item => item.path === payload.path) !== -1) {
       selectedFile.value = saveNodes.value.find(item => item.path === payload.path);
     } else {
-      GitHubAPI.getContent({ filePath: payload.path, branch: 'main'})
+      GitHubAPI.getContent({ filePath: payload.path, branch: 'test'})
         .then(response => {
           selectedFile.value = {
             ...response.data,
@@ -46,22 +48,12 @@ function onClickItem(node) {
 function onChangeValue(newVal) {
   selectedFile.value = newVal;
 
-  console.log('saveNodes' , saveNodes.value)
-  if(saveNodes.value.findIndex(item => item.path === currentItem.value.path) === -1)
+  if(selectedFile.value.decodeData !== undefined && saveNodes.value.findIndex(item => item.path === currentItem.value.path) === -1)
     saveNodes.value.push({ ...selectedFile.value, status: 'modified' });
 }
 
-function onCommit() {
-  const saveData = saveNodes.value.map(item => {
-    return {
-      ...item,
-      encodedData: btoa(item.decodeData) // Encode to base64
-    }
-  })
-}
-
 onMounted(() => {
-  // Example API call to verify setup
+  // Example API call to verify setup ㅇㅇ
   GitHubAPI.getTreeList()
     .then(response => {
       treeData.value = response.data.tree; // Assuming response.data is in the correct format
