@@ -8,8 +8,10 @@ pipeline {
 
 	stages {
 		stage('Checkout') {
-			git branch: 'test',
-			url: 'https://github.com/ANDUYONG/HelloJenkins.git'
+			steps {
+				git branch: 'test',
+                       		url: 'https://github.com/ANDUYONG/HelloJenkins.git'
+			}
 		}
 
 		stage('Install Dependencies') {
