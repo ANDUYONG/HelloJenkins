@@ -12,26 +12,61 @@ pipeline {
 	stages {
 		stage('Checkout') {
 			steps {
-				git branch: 'test',
-                       		url: 'https://github.com/ANDUYONG/HelloJenkins.git'
+				script {
+					sendStageStatus("Checkout", "RUNNING", "Checkout test...")
+					try {
+						checkout scm
+						sendStageStatus("Checkout", "SUCCESS", "Checkout completed.")
+					} catch (e) {
+						sendStageStatus("Checkout", "FAILURE", e.toString())
+						error("Checkout filed")
+					}
+				}		
 			}
 		}
 
 		stage('Install Dependencies') {
 			steps {
-				sh 'npm install'
+				script {
+					sendStageStatus("Build", "RUNNING", "npm installing...")
+					try {
+						sh 'npm install' // 또는 mvn package
+						sendStageStatus("Build", "SUCCESS", "Successfully installed")
+					} catch (e) {
+						sendStageStatus("Build", "FAILURE", e.toString())
+						error("Build failed")
+					}
+				}
 			}
 		}
 
 		stage('Build') {
 			steps {
-				sh 'npm run build'
+				script {
+					sendStageStatus("Build", "RUNNING", "npm run build")   
+					try {
+						sh 'npm run build' // 또는 mvn package
+						sendStageStatus("Build", "SUCCESS", "Successfully builded.")
+					} catch (e) {
+						sendStageStatus("Build", "FAILURE", e.toString())
+						error("Build failed")
+					}
+				}
 			}
 		}
 
 		stage('Test') {
 			steps {
-				sh 'npm run test'
+				script {
+					sendStageStatus("Test", "RUNNING", "npm run test")   
+					try {
+							sh 'npm run test' // 또는 mvn package
+							sendStageStatus("Test", "SUCCESS", "Test Completed.")
+					} catch (e) {
+							sendStageStatus("Test", "FAILURE", e.toString())
+							error("Test failed")
+					}
+				}
 			}
 		}
 
@@ -39,9 +74,17 @@ pipeline {
 			steps {
 				echo '배포 스크립트 실행'
 				// 예: 로컬 서버에서 확인
-				sh 'rm -rf /Users/duyong/프로젝트/HelloJenkins/deploy/frontend/*'
-				sh 'cp -r dist/* /Users/duyong/프로젝트/HelloJenkins/deploy/frontend'
-
+				script {
+					sendStageStatus("Deploy", "RUNNING", "Deploying...")
+					try {
+						sh 'rm -rf /Users/duyong/프로젝트/HelloJenkins/deploy/frontend/*'
+						sh 'cp -r dist/* /Users/duyong/프로젝트/HelloJenkins/deploy/frontend/'
+						sendStageStatus("Deploy", "SUCCESS", "Successfully Deployed!!")
+					} catch (e) {
+						sendStageStatus("Deploy", "FAILURE", e.toString())
+						error("Build failed")
+					}
+				}
 			}
 		}
 	}
@@ -71,5 +114,15 @@ pipeline {
            		echo "빌드 완료"
            		// 필요하면 여기서 로그 전체 전송 가능
         	}
+	}
+
+	def sendStageStatus(String stageName, String status, String logs) {
+		def safeLogs = logs.replace('"', '\\"')
+		sh """
+			curl -X POST ${SPRING_API} \
+				-H 'Content-Type: application/json' \
+				-d '{"jobName":"${JOB_NAME}","buildNumber":${BUILD_NUMBER},"stage":"${stageName}","status":"${status}","logs":"${safeLogs}"}'
+		"""
+	}
 }
 
