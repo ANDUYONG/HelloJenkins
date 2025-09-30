@@ -77,8 +77,8 @@ pipeline {
 				script {
 					sendStageStatus("Deploy", "RUNNING", "Deploying...")
 					try {
-						sh 'rm -rf "/Users/duyong/프로젝트/HelloJenkins/deploy/frontend/*"'
-						sh 'cp -r dist/* "/Users/duyong/프로젝트/HelloJenkins/deploy/frontend/"'
+						sh 'rm -rf /Users/duyong/프로젝트/HelloJenkins/deploy/frontend/*'
+						sh 'cp -r dist/* /Users/duyong/프로젝트/HelloJenkins/deploy/frontend/'
 						sendStageStatus("Deploy", "SUCCESS", "Successfully Deployed!!")
 					} catch (e) {
 						sendStageStatus("Deploy", "FAILURE", e.toString())
