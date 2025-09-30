@@ -93,7 +93,7 @@ pipeline {
 		success {
 			echo "빌드 성공"
 			sh """
-			// 성공 이벤트 전송
+			# 성공 이벤트 전송
 			curl -X POST ${SPRING_API} \
 			     -H 'Content-Type: application/json' \
 			     -d '{"jobName":"${JOB_NAME}","buildNumber":${BUILD_NUMBER},"status":"SUCCESS"}'
