@@ -43,7 +43,6 @@ const emit = defineEmits(['commit-deploy', 'click-item'])
 function onCommitDeploy() {
 	emit('commit-deploy')
 }
-
 function onClickItem(node) {
     emit('click-item', node);
 }

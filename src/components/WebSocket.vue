@@ -1,34 +1,24 @@
 <template>
-  <div>
-    <h2>Jenkins WebSocket 실시간 상태</h2>
-
-    <div v-if="connected" class="status connected">연결됨 ✅</div>
-    <div v-else class="status disconnected">연결 끊김 ❌</div>
-
-    <div v-if="stages.length === 0">
-      <p>빌드 데이터가 없습니다.</p>
+    <div>
+        <template v-if="stages.length > 0">
+            <h2 style="color: black;">
+                Spring WebSocket이 연결되었습니다.
+            </h2>
+            <h4 style="color: black;">
+                <a href="https://github.com/ANDUYONG/HelloJenkins/tree/test" target="_blank" rel="noopener noreferrer">
+                    👉 👉 👉 github repo 확인하러 가기 !
+                </a>
+            </h4>
+            <h3 v-if="Completed" style="color: red">모든 배포 과정을 완료했습니다.</h3>
+            <h4 style="color: green" >-- Jenkins 배포 자동화 과정을 보여줍니다... --</h4>
+        </template>
+        <template v-else>
+            <h2 style="color: black;">WebSocket 연결 중 입니다...</h2>
+        </template>
     </div>
-
-    <div v-else class="stages">
-      <div v-for="stage in stages" :key="stage.stage" class="stage-card">
-        <div class="stage-header">
-          <span>{{ stage.stage }}</span>
-          <span :class="stage.status.toLowerCase()">{{ stage.status }}</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="messages">
-      <h3>Log:</h3>
-      <ul>
-        <li v-for="(msg, index) in messages" :key="index">{{ msg }}</li>
-      </ul>
-    </div>
-  </div>
 </template>
-
 <script lang="ts" setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount, inject } from 'vue';
 
 interface Stage {
   stage: string;
@@ -38,8 +28,11 @@ interface Stage {
 const ws = ref<WebSocket | null>(null);
 const messages = ref<string[]>([]);
 const messageToSend = ref('');
-const stages = ref<Stage[]>([]);
 const connected = ref(false);
+
+const Completed = ref(false);
+
+const stages = inject('stages', ref<any[]>([]))
 
 // WebSocket 연결
 function connect() {
@@ -55,12 +48,22 @@ function connect() {
   ws.value.onmessage = (event) => {
     console.log('Message received:', event.data);
     messages.value.push(event.data);
-
     // 예: 서버에서 JSON 형태로 빌드 상태 전달
     try {
       const data = JSON.parse(event.data);
-      if (Array.isArray(data.stages)) {
-        stages.value = data.stages;
+
+      const deployIdx = stages.value.findIndex(x => x.stage === data.stage);
+      if (deployIdx !== -1) {
+        stages.value[deployIdx] = data;
+      } else {
+        if(stages.value.length !== 4)
+            stages.value.push(data);
+
+        if(data.stage === "Deploy" && data.status === "SUCCESS")
+            Completed.value = true
+        
+        // if(data.stage === null)
+        //     disconnect()        
       }
     } catch (e) {
       console.warn('JSON parsing error:', e);
@@ -126,7 +129,7 @@ onBeforeUnmount(() => {
   color: green;
 }
 .stage-header .failed {
-  color: red;
+  color: #b86c6c;
 }
 .stage-header .running {
   color: orange;

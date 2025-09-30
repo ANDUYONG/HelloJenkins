@@ -26,19 +26,41 @@ function onChangeItem(payload) {
         .then(response => {
           selectedFile.value = {
             ...response.data,
-            decodeData: atob(response.data.content), 
+            decodeData: decodeBase64(response.data.content), 
           }; // Decode base64 content
         })
         .catch(error => {
           selectedFile.value = {};
         });
       }
-      currentEditorType.value = payload.path.endsWith('.js') ? 'javascript' :
-                                payload.path.endsWith('.vue') ? 'html' :
-                                payload.path.endsWith('.html') ? 'html' :
-                                payload.path.endsWith('.css') ? 'css' :
-                                'plaintext'; // Default to plaintext if no match
+      currentEditorType.value = getLanguageByExtension(payload.name);
   }
+}
+
+function getLanguageByExtension(filename) {
+  const ext = filename.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'js': return 'javascript';
+    case 'ts': return 'typescript';
+    case 'vue': return 'vue'; // vue 플러그인 필요
+    case 'json': return 'json';
+    case 'html': return 'html';
+    case 'css': return 'css';
+    case 'java': return 'java';
+    case 'py': return 'python';
+    case 'sql': return 'sql';
+    case 'xml': return 'xml';
+    default: return 'plaintext';
+  }
+}
+
+function decodeBase64(base64String) {
+  const binary = atob(base64String);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder('utf-8').decode(bytes);
 }
 
 function onClickItem(node) {

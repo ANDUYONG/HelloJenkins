@@ -57,7 +57,7 @@
         <h2></h2>
       </div>
     </div> -->
-    <WebSocket/>
+    
     <BlueOcean class="pl-[20px] py-[50px] self-start"/>
   </div>
 </template>
@@ -65,7 +65,6 @@
 <script setup>
 import IconMiniProgressbar from '../icons/IconMiniProgressbar.vue';
 import BlueOcean from '../BlueOcean.vue';
-import WebSocket from '../WebSocket.vue';
 // Emits 'close' event when X is clicked
 
 </script>
