@@ -77,8 +77,8 @@ pipeline {
 				script {
 					sendStageStatus("Deploy", "RUNNING", "Deploying...")
 					try {
-						sh 'rm -rf /Users/duyong/프로젝트/HelloJenkins/deploy/frontend/*'
-						sh 'cp -r dist/* /Users/duyong/프로젝트/HelloJenkins/deploy/frontend/'
+						sh 'rm -rf "/Users/duyong/프로젝트/HelloJenkins/deploy/frontend/*"'
+						sh 'cp -r dist/* "/Users/duyong/프로젝트/HelloJenkins/deploy/frontend/"'
 						sendStageStatus("Deploy", "SUCCESS", "Successfully Deployed!!")
 					} catch (e) {
 						sendStageStatus("Deploy", "FAILURE", e.toString())
@@ -115,14 +115,14 @@ pipeline {
            		// 필요하면 여기서 로그 전체 전송 가능
         	}
 	}
+}
 
-	def sendStageStatus(String stageName, String status, String logs) {
-		def safeLogs = logs.replace('"', '\\"')
-		sh """
-			curl -X POST ${SPRING_API} \
-				-H 'Content-Type: application/json' \
-				-d '{"jobName":"${JOB_NAME}","buildNumber":${BUILD_NUMBER},"stage":"${stageName}","status":"${status}","logs":"${safeLogs}"}'
-		"""
-	}
+def sendStageStatus(String stageName, String status, String logs) {
+    def safeLogs = logs.replace('"', '\\"')
+    sh """
+        curl -X POST ${env.SPRING_API} \
+            -H 'Content-Type: application/json' \
+            -d '{"jobName":"${env.JOB_NAME}","buildNumber":${env.BUILD_NUMBER},"stage":"${stageName}","status":"${status}","logs":"${safeLogs}"}'
+    """
 }
 
