@@ -67,7 +67,7 @@ onMounted(() => {
 <template>
   <div class="flex w-full h-screen min-h-screen">
     <aside class="w-[260px] px-[10px] bg-[#23272e] flex-shrink-0 flex flex-col">
-      <h2>Hello Jenkins! xg</h2>
+      <h2>Hello Jenkins! xg test</h2>
       <TreeView 
         :nodes="treeData" 
         :save-nodes="saveNodes"
