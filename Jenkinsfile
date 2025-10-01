@@ -114,14 +114,13 @@ pipeline {
 			echo "빌드 완료"
 
 			script {
-				// 전체 로그 가져오기 (줄 제한 없음)
-				def logs = currentBuild.rawBuild.getLog().join("\n")
-				def safeLogs = logs.replace('"', '\\"')
+				def logs = currentBuild.rawBuild.getLog(999999).join("\n")
+				def encodedLogs = logs.bytes.encodeBase64().toString()
 
 				sh """
 				curl -X POST ${SPRING_API} \
 					-H 'Content-Type: application/json' \
-					-d '{"jobName":"${JOB_NAME}","buildNumber":${BUILD_NUMBER},"status":"COMPLETED","logs":"${safeLogs}"}'
+					-d '{"jobName":"${JOB_NAME}","buildNumber":${BUILD_NUMBER},"status":"COMPLETED","logs":"${encodedLogs}"}'
 				"""
 			}
 		}

@@ -33,25 +33,28 @@ function onChangeItem(payload) {
           selectedFile.value = {};
         });
       }
-      currentEditorType.value = getLanguageByExtension(payload.name);
+      currentEditorType.value = getLanguageByExtension(payload.fileName);
   }
 }
 
 function getLanguageByExtension(filename) {
-  const ext = filename.split('.').pop()?.toLowerCase();
-  switch (ext) {
-    case 'js': return 'javascript';
-    case 'ts': return 'typescript';
-    case 'vue': return 'vue'; // vue 플러그인 필요
-    case 'json': return 'json';
-    case 'html': return 'html';
-    case 'css': return 'css';
-    case 'java': return 'java';
-    case 'py': return 'python';
-    case 'sql': return 'sql';
-    case 'xml': return 'xml';
-    default: return 'plaintext';
+  if(filename) {
+    const ext = filename.split('.').pop()?.toLowerCase();
+    switch (ext) {
+      case 'js': return 'javascript';
+      case 'ts': return 'typescript';
+      case 'vue': return 'vue'; // vue 플러그인 필요
+      case 'json': return 'json';
+      case 'html': return 'html';
+      case 'css': return 'css';
+      case 'java': return 'java';
+      case 'py': return 'python';
+      case 'sql': return 'sql';
+      case 'xml': return 'xml';
+      default: return 'plaintext';
+    }
   }
+  return 'plaintext';
 }
 
 function decodeBase64(base64String) {
