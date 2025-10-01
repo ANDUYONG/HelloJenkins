@@ -112,16 +112,16 @@ pipeline {
 
 		always {
 			echo "빌드 완료"
-
 			script {
-				def logs = currentBuild.rawBuild.getLog(999999).join("\n")
-				def encodedLogs = logs.bytes.encodeBase64().toString()
-
-				sh """
-				curl -X POST ${SPRING_API} \
-					-H 'Content-Type: application/json' \
-					-d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"COMPLETED","logs":"${encodedLogs}"}' || true
-				"""
+				try {
+					def logs = currentBuild.rawBuild.getLog(999999).join("\n")
+					def encodedLogs = logs.bytes.encodeBase64().toString()
+					sh """curl -X POST ${SPRING_API} \
+						-H 'Content-Type: application/json' \
+						-d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"COMPLETED","logs":"${encodedLogs}"}' || true"""
+				} catch (e) {
+					echo "always block 에러: ${e}"
+				}
 			}
 		}
 	}
