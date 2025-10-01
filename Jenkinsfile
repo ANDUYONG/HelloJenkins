@@ -111,9 +111,20 @@ pipeline {
 		}
 
 		always {
-           		echo "빌드 완료"
-           		// 필요하면 여기서 로그 전체 전송 가능
-        	}
+			echo "빌드 완료"
+
+			script {
+				// 전체 로그 가져오기 (줄 제한 없음)
+				def logs = currentBuild.rawBuild.getLog().join("\n")
+				def safeLogs = logs.replace('"', '\\"')
+
+				sh """
+				curl -X POST ${SPRING_API} \
+					-H 'Content-Type: application/json' \
+					-d '{"jobName":"${JOB_NAME}","buildNumber":${BUILD_NUMBER},"status":"COMPLETED","logs":"${safeLogs}"}'
+				"""
+			}
+		}
 	}
 }
 
