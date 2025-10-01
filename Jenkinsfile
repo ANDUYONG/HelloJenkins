@@ -120,7 +120,7 @@ pipeline {
 				sh """
 				curl -X POST ${SPRING_API} \
 					-H 'Content-Type: application/json' \
-					-d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"COMPLETED","logs":"${encodedLogs}"}'
+					-d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"COMPLETED","logs":"${encodedLogs}"}' || true
 				"""
 			}
 		}
