@@ -96,7 +96,7 @@ pipeline {
 			# 성공 이벤트 전송
 			curl -X POST ${SPRING_API} \
 			     -H 'Content-Type: application/json' \
-			     -d '{"jobName":"${JOB_NAME}","buildNumber":${BUILD_NUMBER},"status":"SUCCESS"}'
+			     -d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"SUCCESS"}'
 			"""
 		}
 		
@@ -106,7 +106,7 @@ pipeline {
 			sh """
            		curl -X POST ${SPRING_API} \
                 	     -H 'Content-Type: application/json' \
-                	     -d '{"jobName":"${JOB_NAME}","buildNumber":${BUILD_NUMBER},"status":"FAILURE"}'
+                	     -d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"FAILURE"}'
            		"""
 		}
 
@@ -120,7 +120,7 @@ pipeline {
 				sh """
 				curl -X POST ${SPRING_API} \
 					-H 'Content-Type: application/json' \
-					-d '{"jobName":"${JOB_NAME}","buildNumber":${BUILD_NUMBER},"status":"COMPLETED","logs":"${encodedLogs}"}'
+					-d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"COMPLETED","logs":"${encodedLogs}"}'
 				"""
 			}
 		}
