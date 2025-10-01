@@ -90,7 +90,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex w-full h-screen min-h-screen">
+  <div class="flex w-full">
     <aside class="w-[260px] px-[10px] bg-[#23272e] flex-shrink-0 flex flex-col">
       <h2>Hello Jenkins! xg test35 h3f gd ggg   </h2>
       <TreeView 
