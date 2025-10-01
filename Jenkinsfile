@@ -92,12 +92,23 @@ pipeline {
 	post {
 		success {
 			echo "빌드 성공"
-			sh """
-			# 성공 이벤트 전송
-			curl -X POST ${SPRING_API} \
-			     -H 'Content-Type: application/json' \
-			     -d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"SUCCESS"}'
-			"""
+			script {
+				try {
+					def logs = currentBuild.rawBuild.getLog(999999).join("\n")
+					def encodedLogs = logs.bytes.encodeBase64().toString()
+					sh """curl -X POST ${SPRING_API} \
+						-H 'Content-Type: application/json' \
+						-d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"COMPLETED","logs":"${encodedLogs}"}' || true"""
+				} catch (e) {
+					echo "always block 에러: ${e}"
+				}
+			}
+			// sh """
+			// # 성공 이벤트 전송
+			// curl -X POST ${SPRING_API} \
+			//      -H 'Content-Type: application/json' \
+			//      -d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"SUCCESS"}'
+			// """
 		}
 		
 		failure {
