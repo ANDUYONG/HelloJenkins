@@ -1,7 +1,7 @@
 
 <template>
 		<div class="relative h-full flex flex-col bg-[#23272e] rounded-md pr-[60px]">
-			<div class="py-[5px] text-sm font-semibold text-underlined">수정 파일 목록</div>
+			<div style="color: aliceblue;" class="py-[5px] text-sm font-semibold text-underlined">수정 파일 목록</div>
 			<input 
 			v-model="message" 
 			type="text" 
