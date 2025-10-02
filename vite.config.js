@@ -23,7 +23,7 @@ export default defineConfig(async () => {
       port: 3000, // 원하는 포트로 변경 가능
         proxy: {
         '/api': {
-            target: 'http://localhost:8080',
+            target: 'http://localhost:8091',
             changeOrigin: true,
             rewrite: path => path.replace(/^\/api/, '/api'),
           },

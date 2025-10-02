@@ -54,7 +54,7 @@ const totalLog = inject('totalLog', ref(''))
 function connect() {
   if (ws.value && ws.value.readyState === WebSocket.OPEN) return;
 
-  ws.value = new WebSocket('ws://localhost:8080/ws/jenkins'); // 서버 주소 확인
+  ws.value = new WebSocket('ws://localhost:8091/ws/jenkins'); // 서버 주소 확인
   ws.value.onopen = () => {
     console.log('WebSocket connected');
     connected.value = true;

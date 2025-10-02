@@ -15,7 +15,7 @@
     <span class="flex-1 text-yellow-400 group-hover:text-blue-400 transition-colors duration-200 truncate" style="color:#facc15 !important;">
       {{ node.path }}
     </span>
-    <span v-if="isHovered" class="ml-2 text-xs text-gray-400 pointer-events-none">
+    <span v-if="isHovered" style="color: aliceblue;" class="ml-2 text-xs text-gray-400 pointer-events-none">
       {{ statusLabel }}
     </span>
   </li>

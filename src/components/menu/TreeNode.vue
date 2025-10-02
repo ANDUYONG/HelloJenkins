@@ -11,11 +11,12 @@
         >
         <span
           v-if="hasChildren"
+          style="color: aliceblue;"
           class="mr-[5px] text-xs text-gray-400 hover:text-blue-400 transition-colors duration-200"
         >
           {{ expanded ? '-' : '+' }}
         </span>
-        <span class="text-gray-200 group-hover:text-blue-400 transition-colors duration-200">{{ node.fileName }}</span>
+        <span style="color: aliceblue;" class="text-gray-200 group-hover:text-blue-400 transition-colors duration-200">{{ node.fileName }}</span>
       </div>
       <ul v-if="hasChildren && expanded" class="ml-4 border-l border-gray-700 pl-2">
         <TreeNode
