@@ -9,7 +9,7 @@ const treeData = ref([])
 const selectedFile = ref({ decodeData: '' })
 provide('selectedFile', selectedFile)
 
-const currentEditorType = ref('javascript'); // Default to JavaScript 
+const currentEditorType = ref('javascript'); // Default to JavaScript  
 const currentItem = ref({ path: '왼쪽 트리에서 파일을 선택하세요.' });
 const saveNodes = ref([])
 let editorInstance = null;
