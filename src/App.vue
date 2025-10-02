@@ -43,7 +43,7 @@ function getLanguageByExtension(filename) {
     switch (ext) {
       case 'js': return 'javascript';
       case 'ts': return 'typescript';
-      case 'vue': return 'vue'; // vue 플러그인 필요  b
+      case 'vue': return 'vue'; // vue 플러그인 필요  bg
       case 'json': return 'json';
       case 'html': return 'html';
       case 'css': return 'css';
