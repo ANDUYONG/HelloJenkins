@@ -27,7 +27,7 @@ function onChangeItem(payload) {
           selectedFile.value = {
             ...response.data,
             decodeData: decodeBase64(response.data.content), 
-          }; // Decode base64 contentgg 
+          }; // Decode base64 contentgg ㅎ
         })
         .catch(error => {
           selectedFile.value = {};
