@@ -78,7 +78,7 @@ function onChangeValue(newVal) {
 }
 
 onMounted(() => {
-  // Example API call to verify setup ㅇㅇ
+  // Example API call to verify setup ㅇㅇg
   GitHubAPI.getTreeList()
     .then(response => {
       treeData.value = response.data.tree; // Assuming response.data is in the correct format
