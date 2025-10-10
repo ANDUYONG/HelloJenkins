@@ -1,15 +1,22 @@
 <template>
-    <div style="color: black">
-        <WebSocket/>
-        <div v-for="stage in stages" :key="stage.stage" class="stage-card">
-        <div class="stage-header">
-            <span>{{ stage.stage }}</span>
-            <span :class="stage.status.toLowerCase()">{{ stage.status }}</span>
+    <div class="flex" style="color: black">
+        <div>
+            <WebSocket/>
+            <div v-for="stage in stages" :key="stage.stage" class="stage-card">
+            <div class="stage-header">
+                <span>{{ stage.stage }}</span>
+                <span :class="stage.status.toLowerCase()">{{ stage.status }}</span>
+            </div>
+            <pre class="stage-log">{{ stage.logs }}</pre>
+            <div class="progress-bar">
+                <div class="progress" :style="{ width: stageProgress(stage.status) + '%' }"></div>
+            </div>
+            </div>
         </div>
-        <pre class="stage-log">{{ stage.logs }}</pre>
-        <div class="progress-bar">
-            <div class="progress" :style="{ width: stageProgress(stage.status) + '%' }"></div>
-        </div>
+        <div class="mx-[20px] border-l-2 border-gray-400 h-12 mx-4"></div>
+        <div class="" v-if="totalLog">
+            <div class="px-[30px] my-[5px] w-[130px]" style="background-color: coral;">Total Log</div>
+            <p style="color: black" v-text="totalLog"></p>
         </div>
   </div>
 </template>
@@ -21,8 +28,10 @@ import WebSocket from './WebSocket.vue'
 const jobName = ref('MyJob')
 const buildNumber = ref(0)
 const stages = ref([])
+const totalLog = ref('')
 
 provide('stages', stages)
+provide('totalLog', totalLog)
 
 function stageProgress(status) {
   switch (status) {

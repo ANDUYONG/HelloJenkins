@@ -4,7 +4,7 @@ pipeline {
 	environment {
 		NODE_HOME = '/Users/duyong/.nvm/versions/node/v20.19.5/bin/node'
 		PATH = "${NODE_HOME}:${env.PATH}"
-		SPRING_API = "http://220.89.224.199:8091/api/jenkins/event"
+		SPRING_API = "http://220.89.224.199:8090/api/jenkins/event"
 		JOB_NAME = "${env.JOB_NAME}"
 		BUILD_NUMBER = "${env.BUILD_NUMBER}"
 	}
@@ -111,17 +111,21 @@ pipeline {
 		}
 
 		always {
-            // 최소한의 Groovy만 사용
-            echo "빌드 완료 (always 블록 진입)"
-
-            // 로그 전송
-            sh """
-                LOGS=\$(cat \${WORKSPACE}/jenkins-build.log || echo "No log file")
-                curl -X POST ${SPRING_API} \
-                    -H 'Content-Type: application/json' \
-                    -d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"COMPLETED","logs":"'\$LOGS'"}' || true
-            """
-        }
+			echo "빌드 완료"
+			script {
+				try {
+					def logs = currentBuild.rawBuild.getLog(999999).join("\n")
+					def encodedLogs = logs.bytes.encodeBase64().toString()
+					sh """
+					curl -X POST ${SPRING_API} \
+						 -H 'Content-Type: application/json' \
+						 -d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"COMPLETED","logs":"${encodedLogs}"}' || true
+					"""
+				} catch (e) {
+					echo "always block 에러: ${e}"
+				}
+			}
+		}
 	}
 }
 
