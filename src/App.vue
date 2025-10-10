@@ -1,5 +1,5 @@
 <script setup>
-import LayoutArea from './components/layout/LayoutArea.vue';
+  import LayoutArea from './components/layout/LayoutArea.vue';
 </script>
 
 <template>
