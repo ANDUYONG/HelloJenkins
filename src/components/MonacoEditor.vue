@@ -2,53 +2,63 @@
   <div class="monaco-container absolute inset-0" ref="container" style="isolation:isolate;"></div>
 </template>
 
-<script setup>
-import { onMounted, ref, watch, inject } from 'vue'
-const props = defineProps(['modelValue']);
-const emits = defineEmits(['update:modelValue', 'changeValue']);
+<script setup lang="ts">
+import { ref } from 'vue'
+
+interface MonacoEditorProps {
+  modelValue: string
+}
+
+const props = defineProps<MonacoEditorProps>();
+const emits = defineEmits(['update:modelValue']);
 let editorInstance = null;
-const selectedFile = inject('selectedFile')
 const container = ref(null)
 
-onMounted(async () => {
-  const monaco = await import('monaco-editor')
-  editorInstance = monaco.editor.create(container.value, {
-    value: props.modelValue || '',
-    language: 'javascript',
-    theme: 'vs-dark',
-    automaticLayout: true,
-    // --------- 여기서 기능 비활성화 ---------
-    minimap: { enabled: false },       // 미니맵 제거
-    suggestOnTriggerCharacters: false, // 자동완성 끄기
-    quickSuggestions: false,           // 빠른 제안 끄기
-    parameterHints: { enabled: false },// 파라미터 힌트 끄기
-    wordBasedSuggestions: false,       // 단어 기반 자동완성 끄기
-    formatOnPaste: false,              // 붙여넣기 시 자동 포맷 끄기
-    formatOnType: false,               // 입력 시 자동 포맷 끄기
-    hover: { enabled: false },         // 마우스 오버 툴팁 끄기
-    links: false                       // 링크 자동 감지 끄기
+async function onInit() {
+  try {
+    const monaco = await import('monaco-editor')
 
-  })
-  monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
-    noSemanticValidation: true, // 의미(semantic) 검사 끄기
-    noSyntaxValidation: true    // 문법(syntax) 검사 끄기
-  });
-  editorInstance.onDidChangeModelContent(() => {
-    const val = editorInstance.getValue();
-    emits('update:modelValue', val);
-    if (selectedFile.value.decodeData) selectedFile.value.decodeData = val;
-  });
-})
+    if (editorInstance) {
+      editorInstance.dispose()
+      editorInstance = null
+    }
 
-watch(() => props.modelValue, (newVal, oldValue) => {
-  if (editorInstance && editorInstance.getValue() !== newVal) {
-    editorInstance.setValue(newVal || '');
+    editorInstance = monaco.editor.create(container.value, {
+      value: props.modelValue || '',
+      language: 'javascript',
+      theme: 'vs-dark',
+      automaticLayout: true,
+      minimap: { enabled: false },
+      suggestOnTriggerCharacters: false,
+      quickSuggestions: false,
+      parameterHints: { enabled: false },
+      wordBasedSuggestions: 'off',
+      formatOnPaste: false,
+      formatOnType: false,
+      hover: { enabled: false },
+      links: false,
+    })
+
+    // 에디터 입력 시 emit
+    editorInstance.onDidChangeModelContent(() => {
+      const value = editorInstance.getValue()
+      emits('update:modelValue', value)
+    })
+
+    monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+      noSemanticValidation: true,
+      noSyntaxValidation: true,
+    })
+  } catch (err) {
+    if (err && err.message === 'Canceled') {
+      // Monaco 내부 cancel → 무시 가능
+      return
+    }
+    console.error('Monaco initialization failed:', err)
   }
-  if (oldValue && oldValue !== newVal) {
-    selectedFile.value.decodeData = newVal;
-    emits('changeValue', selectedFile.value);
-  }
-});
+}
+
+defineExpose({ onInit })
 </script>
 
 <style scoped>

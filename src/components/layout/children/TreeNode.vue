@@ -1,5 +1,37 @@
+<script setup lang="ts">
+import { ref, computed, inject } from 'vue'
+import TreeNode from './TreeNode.vue'
+import type { API, LeftAreaNode, MainArea } from '../provider/LayoutDataProvider.vue'
+
+
+export interface TreeNodeProps {
+  node: LeftAreaNode | null
+}
+
+const props = defineProps<TreeNodeProps>()
+const main = inject<MainArea>('mainArea')
+const key = computed(() => props.node?.sha || props.node?.fileName || props.node?.path || '')
+const expanded = ref(false)
+const hasChildren = computed(() => Array.isArray(props.node.children) && props.node.children.length > 0)
+const isHovered = ref(false)
+
+const api = inject<API>('API')
+
+function onClick(node: LeftAreaNode) {
+    if(node.type === 'tree') {
+      expanded.value = !expanded.value
+    } else {
+      if(!main || !main.currentNode || main.currentNode.sha !== props.node.sha) {  
+        api.detail(props.node.path)
+      }
+    }
+}
+</script>
+
 <template>
     <li
+      v-if="props"
+      :key="key"
       class="rounded-md transition-colors duration-200 group"
       :class="[{ 'bg-[#1e1e1e]': !isHovered, 'bg-[#23272e]': isHovered }]"
       @mouseenter="isHovered = true"
@@ -7,7 +39,7 @@
     >
       <div
         class="flex items-center px-3 py-2 cursor-pointer select-none"
-        @click.stop="onClick"
+        @click.stop="onClick(props.node)"
         >
         <span
           v-if="hasChildren"
@@ -21,42 +53,12 @@
       <ul v-if="hasChildren && expanded" class="ml-4 border-l border-gray-700 pl-2">
         <TreeNode
           v-for="child in node.children"
-          :key="child.sha || child.fileName || child.path"
           :node="child"
           @toggle="onClick"
         />
       </ul>
     </li>
-  </template>
-
-<script setup>
-import { ref, computed } from 'vue'
-import TreeNode from './TreeNode.vue'
-
-const emits = defineEmits(['toggle'])
-
-const props = defineProps({
-  node: {
-    type: Object,
-    required: true
-  }
-})
-
-const expanded = ref(false)
-const hasChildren = computed(() => Array.isArray(props.node.children) && props.node.children.length > 0)
-const isHovered = ref(false)
-
-function onClick(payload) {
-  if(payload.node) {
-    // If the node is expanded, emit the toggle event to notify parent components
-    emits('toggle', payload)
-  } else {
-    expanded.value = !expanded.value
-    // If the node is collapsed, still emit the toggle event
-    emits('toggle', { node: props.node, expanded: expanded.value })
-  }
-}
-</script>
+</template>
 
 <style scoped>
   ul {

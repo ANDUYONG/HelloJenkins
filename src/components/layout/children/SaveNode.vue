@@ -1,9 +1,31 @@
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import type { Node } from '../provider/LayoutDataProvider.vue'
+
+interface SaveNodeProps {
+  node: Node
+}
+
+const props = defineProps<SaveNodeProps>()
+
+const emits = defineEmits<{
+  (e: 'click-item', node: Node)
+}>()
+
+const isHovered = ref(false)
+const statusLabel = '수정됨'
+
+function onClick() {
+  emits('click-item', props.node);
+}
+</script>
+
 <template>
   <li
     class="rounded-md transition-colors duration-200 group flex items-center cursor-pointer select-none relative"
     :class="[
       { 'bg-[#1e1e1e]': !isHovered, 'bg-[#23272e]': isHovered },
-      { 'font-bold': node.status === 'modified' }
+      { 'font-bold': props.node.status === 'modified' }
     ]"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
@@ -13,31 +35,13 @@
       ⇅
     </span>
     <span class="flex-1 text-yellow-400 group-hover:text-blue-400 transition-colors duration-200 truncate" style="color:#facc15 !important;">
-      {{ node.path }}
+      {{ props.node.path }}
     </span>
     <span v-if="isHovered" style="color: aliceblue;" class="ml-2 text-xs text-gray-400 pointer-events-none">
       {{ statusLabel }}
     </span>
   </li>
 </template>
-
-<script setup>
-import { ref, computed } from 'vue'
-const emits = defineEmits(['click-item'])
-const props = defineProps({
-  node: {
-    type: Object,
-    required: true
-  }
-})
-const isHovered = ref(false)
-// Only show 'modified' files, so label is always '수정됨'
-const statusLabel = '수정됨'
-
-function onClick() {
-  emits('click-item', props.node);
-}
-</script>
 
 <style scoped>
 li {
