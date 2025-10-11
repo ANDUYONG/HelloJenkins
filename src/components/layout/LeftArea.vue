@@ -2,7 +2,9 @@
     import { computed, inject, ref } from 'vue'
     import SaveView from './children/SaveView.vue';
     import TreeNode from './children/TreeNode.vue';
+    import Select from '../Select.vue';
     import type { LeftArea, MainArea, API } from './provider/LayoutDataProvider.vue'
+    import SaveTab from './children/SaveTab.vue';
 
     const data = inject<LeftArea>('leftArea')
     const main = inject<MainArea>('mainArea')
@@ -12,15 +14,21 @@
 </script>
 <template>
   <div class="flex flex-col h-full">
-    <div class="flex-1 overflow-auto">
-        <template v-if="isShowTree">
-            <TreeNode
-                v-for="node in data.tree"
-                :node="node"
-            />
-        </template>
+    <div class="h-[500px]">
+        <div class="flex">
+            <Select/>
+            <div class="spinner"></div>
+        </div>
+        <div class="h-full overflow-auto">
+            <template v-if="isShowTree">
+                <TreeNode
+                    v-for="node in data.tree"
+                    :node="node"
+                />
+            </template>
+        </div>
     </div>
-    <div class="w-[300px] h-[200px] mx-auto mt-2">
+    <div class="w-[300px] h-[300px] mx-auto mt-2">
         <div class="flex justify-between">
             <div style="color: aliceblue;" class="py-[5px] text-sm font-semibold text-underlined">
                 수정 파일 목록
@@ -49,7 +57,7 @@
 			class="w-full mb-2 p-2 rounded bg-[#2c2f36] text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-blue-500"
 			style="color: white;"
 		/>
-        
+        <SaveTab/>
         <SaveView 
             v-if="isShowSavedView"
             :nodes="main.savedNodes" 
@@ -57,3 +65,20 @@
     </div>
   </div>
 </template>
+<style setup>
+.spinner {
+  border: 4px solid rgba(0,0,0,0.1);
+  border-left-color: #4f46e5; /* 원하는 색상 */
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+  margin: 0px;
+  margin-top: 3px;
+  margin-left: 10px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>

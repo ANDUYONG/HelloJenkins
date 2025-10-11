@@ -201,8 +201,4 @@
 </template>
 
 <style scoped>
-    div {
-        background: #23272e;
-        color: white;
-    }
 </style>
