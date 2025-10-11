@@ -60,6 +60,7 @@
     watch(() => data.currentNode, newVal => editor.value.onInit())
 </script>
 <template>
+    <h3 class="p-[8px]">{{ data.currentNode && data.currentNode.path ? data.currentNode.path.replace('/', ' > ') : '왼쪽 트리에서 파일을 선택해주세요.' }}</h3>
     <MonacoEditor
         ref="editor"
         v-model="data.currentNode.decodedData"

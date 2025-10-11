@@ -24,7 +24,7 @@ const treeData = [
 </script>
 
 <template>
-    <div class="flex">
+    <!-- <div class="flex">
         <div>
             <h1>Hello Jenkins!</h1>
             <div class="w-[200px]">
@@ -34,5 +34,5 @@ const treeData = [
         <div>
              <MonacoEditor />
         </div>
-    </div>
+    </div> -->
 </template>
