@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { computed, inject, ref } from 'vue'
+    import { computed, inject, ref, watch } from 'vue'
     import SaveView from './children/SaveView.vue';
     import TreeNode from './children/TreeNode.vue';
     import Select from '../Select.vue';
@@ -11,13 +11,20 @@
     const isShowTree = computed(() => data && data.tree && data.tree.length > 0);
     const isShowSavedView = computed(() => main && main.savedNodes && main.savedNodes.length > 0)
     const api = inject<API>('API')
+
+    watch(() => data.selectedItem, newValue => {
+        api.getTreeList(newValue.name) 
+    })
 </script>
 <template>
   <div class="flex flex-col h-full">
     <div class="h-[500px]">
         <div class="flex">
-            <Select/>
-            <div class="spinner"></div>
+            <Select
+                v-model="data.selectedItem"
+                :items="data.select"
+            />
+            <div v-if="data.isShowSelectSpinner" class="spinner"></div>
         </div>
         <div class="h-full overflow-auto">
             <template v-if="isShowTree">

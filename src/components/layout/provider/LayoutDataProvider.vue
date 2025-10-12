@@ -1,6 +1,6 @@
 <script setup lang="ts">
     import GitHubAPI from '@/http/git-hub-api';
-    import { onBeforeMount, provide, reactive } from 'vue'
+    import { onBeforeMount, provide, reactive, toRaw } from 'vue'
     import LeftArea from '../LeftArea.vue';
 
     export interface LayoutDataProviderProps {
@@ -14,8 +14,9 @@
         truncated: boolean
         tree: LeftAreaNode[]
         msg: string
-
-        select: 
+        select: Branch[]
+        selectedItem: Branch | DefaultSelectItem
+        isShowSelectSpinner: boolean
     }
 
     export interface LeftAreaNode {
@@ -54,6 +55,11 @@
 
     export interface HiddenArea {
         isVisible: boolean
+    }
+
+    export interface DefaultSelectItem {
+        name: string
+        val: string
     }
 
     export interface Branch {
@@ -114,6 +120,7 @@
         save: () => void
         detail: (path: string) => void
         init: () => void
+        getBranches: (branch: string) => void
 
         clickItemInSaveView: (node: Node) => void
     }
@@ -124,6 +131,12 @@
             truncated: false,
             tree: [],
             msg: '',
+            select: [],
+            selectedItem: {
+                name: '',
+                val: '',
+            },
+            isShowSelectSpinner: false
         },
         mainArea: {
             currentNode: {
@@ -205,35 +218,50 @@
             }
         },
         detail(path: string) {
-            GitHubAPI.getContent({ filePath: path, branch: 'test'})
+            console.log('leftArea.selectedItem.name', leftArea.selectedItem) 
+            const selected = toRaw(leftArea.selectedItem)
+            GitHubAPI.getContent({ filePath: path, branch: selected.name})
             .then(response => {
-            mainArea.currentNode = {
-                ...response.data,
-                decodedData: helper.decodeBase64(response.data.content), 
-            } // Decode base64 contentgg 
+                mainArea.currentNode = {
+                    ...response.data,
+                    decodedData: helper.decodeBase64(response.data.content), 
+                } // Decode base64 contentgg 
             })
             .catch(error => {
                 console.log(error)
                 mainArea.currentNode = {...initModel.mainArea.currentNode};
             });
         },
-        async init() {
-            await GitHubAPI.getTreeList()
+        async getTreeList(branch: string) {
+            leftArea.isShowSelectSpinner = true
+            leftArea.tree.length = 0
+            leftArea.sha = ''
+            leftArea.truncated = false
+
+            await GitHubAPI.getTreeList(branch)
                 .then(response => {
-                    Object.assign(leftArea, { ...response.data })
+                    const { tree, sha, truncated } = response.data
+                    leftArea.tree = [...tree]
+                    leftArea.sha = sha
+                    leftArea.truncated = truncated
+                    leftArea.isShowSelectSpinner = false
                 })
                 .catch(error => {
+                    leftArea.isShowSelectSpinner = false
                     console.error('API Error:', error)
                 })
         },
-        async getBranches(branch: string) {
-            await GitHubAPI.branches(branch)
+        async getBranches() {
+            leftArea.isShowSelectSpinner = true
+            await GitHubAPI.branches()
                 .then(response => {
-                    const data: Branch = response.data
-                    
+                    const dataList : Branch[] = response.data
+                    leftArea.select = [...dataList]
+                    leftArea.isShowSelectSpinner = false
                 })
                 .catch(e => {
                     console.error(e)
+                    leftArea.isShowSelectSpinner = false
                 })
         },
         clickItemInSaveView(node: Node) {
@@ -246,7 +274,7 @@
     provide('isProgressVisible', hiddenArea)
     provide('API', API)
 
-    onBeforeMount(API.init)
+    onBeforeMount(() => API.getBranches())
 </script>
 
 <template>

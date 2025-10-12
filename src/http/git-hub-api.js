@@ -3,10 +3,20 @@ import http from './axios'
 const ROOT_PATH = '/github/'
 
 const GitHubAPI = {
-    getTreeList: () => http.get(getApiPath('files')),
-    getContent: ({ filePath, branch }) => http.get(getApiPath('file'), { params: { filePath, branch } }),
+    getTreeList: (branch) => http.get(getApiPath('files'), { params: { branch } }),
+    getContent: ({ filePath, branch }) => {
+        // 안전하게 undefined 체크 + 로그
+        console.log('Axios getContent params:', { filePath, branch })
+
+        return http.get(getApiPath('file'), { 
+            params: { 
+                filePath, 
+                branch: branch ?? 'main' // undefined면 기본값 사용
+            } 
+        })
+    },
     commitContent: (data) => http.post(getApiPath('commitAndPush'), data),
-    branches: (branch) => http.post(getApiPath('branches')),
+    branches: () => http.get(getApiPath('branches')),
     createBranch: (branch) => http.post(getApiPath('createBranch'), branch),
 }
 
