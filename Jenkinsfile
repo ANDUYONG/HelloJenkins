@@ -4,7 +4,7 @@ pipeline {
 	environment {
 		NODE_HOME = '/Users/duyong/.nvm/versions/node/v20.19.5/bin/node'
 		PATH = "${NODE_HOME}:${env.PATH}"
-		SPRING_API = "http://61.81.49.136:8091/api/jenkins/event"
+		SPRING_API = "http://220.89.224.199:8090/api/jenkins/event"
 		JOB_NAME = "${env.JOB_NAME}"
 		BUILD_NUMBER = "${env.BUILD_NUMBER}"
 		BRANCH_NAME = "${env.BRANCH_NAME}"
@@ -162,31 +162,3 @@ def sendStageStatus(String stageName, String status, String logs) {
     """
 }
 
-// -------------------------------
-// 전체 Pipeline Overview 전송
-def sendOverview() {
-	try {
-		def overview = sh(
-			script: "curl -s ${env.JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe",
-			returnStdout: true
-		).trim()
-
-		sh """
-			curl -X POST ${env.SPRING_API}/overview \
-				-H 'Content-Type: application/json' \
-				-d '${overview}'
-		"""
-	} catch (err) {
-		echo "Overview send failed: ${err}"
-	}
-}
-
-// -------------------------------
-// Pipeline 최종 상태 전송
-def sendPipelineStatus(String status) {
-	sh """
-		curl -X POST ${env.SPRING_API} \
-			-H 'Content-Type: application/json' \
-			-d '{"jobName":"${env.JOB_NAME}","branch":"${env.BRANCH_NAME}","buildNumber":"${env.BUILD_NUMBER}","status":"${status}"'
-	"""
-}
