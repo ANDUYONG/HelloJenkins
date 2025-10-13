@@ -7,6 +7,9 @@
         items: Branch[]
     } 
     
+    const emits = defineEmits<{
+        (e: 'change')
+    }>()
     const props = defineProps<SelectProps>()
     const model = defineModel<Branch | DefaultSelectItem>()
     const name = defineModel<string>('name')
@@ -19,10 +22,14 @@
         },
         { immediate: true }
     )
+
+    function onChange(payload: Event) {
+        emits('change')
+    }
 </script>
 <template>
     <div class="flex">
-        <select v-model="model" class="grow p-[3px]">
+        <select v-model="model" class="grow p-[3px]" @change="onChange">
             <option :value="defaultItem">
                 {{ defaultItem.name }}
             </option>

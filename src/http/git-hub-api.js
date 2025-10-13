@@ -15,7 +15,7 @@ const GitHubAPI = {
             } 
         })
     },
-    commitContent: (data) => http.post(getApiPath('commitAndPush'), data),
+    commitContent: ({ list, branch }) => http.post(getApiPath('commitAndPush'), { list, branch }),
     branches: () => http.get(getApiPath('branches')),
     createBranch: (branch) => http.post(getApiPath('createBranch'), branch),
 }

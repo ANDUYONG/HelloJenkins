@@ -1,39 +1,21 @@
 <script setup lang="ts">
-    const dataList = [
-        {
-            val: '1',
-            name: 'test1',
-        },
-        {
-            val: '2',
-            name: 'test2',
-        },
-        {
-            val: '3',
-            name: 'test3',
-        },
-        {
-            val: '4',
-            name: 'test4',
-        },
-        {
-            val: '4',
-            name: 'test4',
-        },
-        {
-            val: '4',
-            name: 'test4',
-        },
-        {
-            val: '4',
-            name: 'test4',
-        },
-    ]
+    import { inject } from 'vue';
+    import { LeftArea } from '../provider/LayoutDataProvider.vue';
+
+    const data = inject<LeftArea>('leftArea')
+
+    function selectedTabColor(name: string) {
+        return `background: ${ data.selectedSavedTab === name ? 'yellow' : undefined };`
+    }
+
+    function onClick(name: string) {
+        data.selectedSavedTab = name
+    }
 </script>
 <template>
-    <div class="m-[2px] flex flex-wrap gap-[1px] ">
-        <template v-for="{ name } in dataList">
-            <button class="flex justify-center">
+    <div class="m-[2px] flex flex-wrap gap-[1px] mt-[10px] mb-[5px] bg-[#282d36]">
+        <template v-for="{ name } in data.select">
+            <button @click="onClick(name)" class="flex justify-center" :style="selectedTabColor(name)">
                 {{ name }}
             </button>
         </template>

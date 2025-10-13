@@ -23,6 +23,7 @@
             <Select
                 v-model="data.selectedItem"
                 :items="data.select"
+                @change="api.selectChangeEvent"
             />
             <div v-if="data.isShowSelectSpinner" class="spinner"></div>
         </div>
@@ -35,40 +36,44 @@
             </template>
         </div>
     </div>
-    <div class="w-[300px] h-[300px] mx-auto mt-2">
-        <div class="flex justify-between">
-            <div style="color: aliceblue;" class="py-[5px] text-sm font-semibold text-underlined">
-                수정 파일 목록
-            </div>
-            <div
-                class="px-4 py-[5px]"
-            >
-                <button
-                    class="px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition-colors duration-200 cursor-pointer"
-                    @click="() => api.save()"
+    <div class="w-[350px] h-[255px] mx-auto mt-2 border border-[#303643] outline-[1px] p-[5px] rounded-xl">
+        <template v-if="data.selectedItem.name">
+            <div class="flex justify-between">
+                <div style="color: aliceblue;" class="py-[5px] text-sm font-semibold text-underlined">
+                    수정 파일 목록
+                </div>
+                <div
+                    class="px-4 py-[5px]"
                 >
-                    변경사항 저장
-                </button>
-                <button
-                    class="px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition-colors duration-200 cursor-pointer"
-                    @click="() => api.commitAndDeploy()"
-                >
-                    커밋 후 배포
-                </button>
+                    <button
+                        class="px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition-colors duration-200 cursor-pointer"
+                        @click="() => api.save()"
+                    >
+                        변경사항 저장
+                    </button>
+                    <button
+                        class="px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition-colors duration-200 cursor-pointer"
+                        @click="() => api.commitAndDeploy()"
+                    >
+                        커밋, 빌드 및 테스트
+                    </button>
+                </div>
             </div>
-        </div>
-		<input 
-			v-model="data.msg" 
-			type="text" 
-			placeholder="커밋 메세지를 입력하세요." 
-			class="w-full mb-2 p-2 rounded bg-[#2c2f36] text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-			style="color: white;"
-		/>
-        <SaveTab/>
-        <SaveView 
-            v-if="isShowSavedView"
-            :nodes="main.savedNodes" 
-        />
+            <input 
+                v-model="data.msg" 
+                type="text" 
+                placeholder="커밋 메세지를 입력하세요." 
+                class="w-full mb-2 p-2 rounded bg-[#2c2f36] text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                style="color: white;"
+            />
+            <SaveTab/>
+            <SaveView
+                :props="data.processList" 
+            />
+        </template>
+        <template v-else>
+            수정할 브랜치를 선택하세요.
+        </template>
     </div>
   </div>
 </template>
