@@ -4,12 +4,15 @@ pipeline {
 	environment {
 		NODE_HOME = '/Users/duyong/.nvm/versions/node/v20.19.5/bin/node'
 		PATH = "${NODE_HOME}:${env.PATH}"
-		SPRING_API = "http://220.89.224.199:8090/api/jenkins/event"
+		SPRING_API = "http://220.89.224.199:8091/api/jenkins/event"
 		JOB_NAME = "${env.JOB_NAME}"
 		BUILD_NUMBER = "${env.BUILD_NUMBER}"
+		BRANCH_NAME = "${env.BRANCH_NAME}"
 	}
 
 	stages {
+
+    	// -------------------------------
 		stage('Checkout') {
 			steps {
 				script {
@@ -17,29 +20,35 @@ pipeline {
 					try {
 						checkout scm
 						sendStageStatus("Checkout", "SUCCESS", "Checkout completed.")
+						sendOverview()
 					} catch (e) {
 						sendStageStatus("Checkout", "FAILURE", e.toString())
+						sendOverview()
 						error("Checkout filed")
 					}
 				}		
 			}
 		}
 
-		stage('Install Dependencies') {
+    	// -------------------------------
+		stage('Install') {
 			steps {
 				script {
 					sendStageStatus("Build", "RUNNING", "npm installing...")
 					try {
 						sh 'npm install' // 또는 mvn package
 						sendStageStatus("Build", "SUCCESS", "Successfully installed")
+						sendOverview()
 					} catch (e) {
 						sendStageStatus("Build", "FAILURE", e.toString())
+						sendOverview()
 						error("Build failed")
 					}
 				}
 			}
 		}
 
+    	// -------------------------------
 		stage('Build') {
 			steps {
 				script {
@@ -47,14 +56,17 @@ pipeline {
 					try {
 						sh 'npm run build' // 또는 mvn package
 						sendStageStatus("Build", "SUCCESS", "Successfully builded.")
+						sendOverview()
 					} catch (e) {
 						sendStageStatus("Build", "FAILURE", e.toString())
+						sendOverview()
 						error("Build failed")
 					}
 				}
 			}
 		}
 
+    	// -------------------------------
 		stage('Test') {
 			steps {
 				script {
@@ -62,15 +74,24 @@ pipeline {
 					try {
 							sh 'npm run test' // 또는 mvn package
 							sendStageStatus("Test", "SUCCESS", "Test Completed.")
+							sendOverview()
 					} catch (e) {
 							sendStageStatus("Test", "FAILURE", e.toString())
+							sendOverview()
 							error("Test failed")
 					}
 				}
 			}
 		}
 
+    	// -------------------------------
 		stage('Deploy') {
+			when {
+				anyOf {
+					branch 'dev'
+					branch 'main'
+				}
+			}
 			steps {
 				echo '배포 스크립트 실행'
 				// 예: 로컬 서버에서 확인
@@ -80,8 +101,10 @@ pipeline {
 						sh 'rm -rf /Users/duyong/프로젝트/HelloJenkins/deploy/frontend/*'
 						sh 'cp -r dist/* /Users/duyong/프로젝트/HelloJenkins/deploy/frontend/'
 						sendStageStatus("Deploy", "SUCCESS", "Successfully Deployed!!")
+						sendOverview()
 					} catch (e) {
 						sendStageStatus("Deploy", "FAILURE", e.toString())
+						sendOverview()
 						error("Build failed")
 					}
 				}
@@ -89,9 +112,10 @@ pipeline {
 		}
 	}
 
+	// -------------------------------
 	post {
 		success {
-			echo "빌드 성공"
+			echo "Pipeline succeeded"
 			sh """
 			# 성공 이벤트 전송
 			curl -X POST ${SPRING_API} \
@@ -99,7 +123,6 @@ pipeline {
 			     -d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"SUCCESS"}'
 			"""
 		}
-		
 		failure {
 			echo "빌드 실패"
 			// 실패 이벤트 전송
@@ -109,7 +132,6 @@ pipeline {
                 	     -d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"FAILURE"}'
            		"""
 		}
-
 		always {
 			echo "빌드 완료"
 			script {
@@ -129,12 +151,42 @@ pipeline {
 	}
 }
 
+// -------------------------------
+// Stage 단위 이벤트 전송
 def sendStageStatus(String stageName, String status, String logs) {
     def safeLogs = logs.replace('"', '\\"')
     sh """
         curl -X POST ${env.SPRING_API} \
             -H 'Content-Type: application/json' \
-            -d '{"jobName":"${env.JOB_NAME}","buildNumber":${env.BUILD_NUMBER},"stage":"${stageName}","status":"${status}","logs":"${safeLogs}"}'
+            -d '{"jobName":"${env.JOB_NAME}","branch":"${env.BRANCH_NAME}","buildNumber":${env.BUILD_NUMBER},"stage":"${stageName}","status":"${status}","logs":"${safeLogs}"}'
     """
 }
 
+// -------------------------------
+// 전체 Pipeline Overview 전송
+def sendOverview() {
+	try {
+		def overview = sh(
+			script: "curl -s ${env.JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe"
+			returnStdout: true
+		).trim()
+
+		sh """
+			curl -X POST ${env.SPRING_API}/overview \
+				-H 'Content-Type: application/json' \
+				-d '${overview}'
+		"""
+	} catch (err) {
+		echo "Overview send failed: ${err}"
+	}
+}
+
+// -------------------------------
+// Pipeline 최종 상태 전송
+def sendPipelineStatus(String status) {
+	sh """
+		curl -X POST ${env.SPRING_API} \
+			-H 'Content-Type: application/json' \
+			-d '{"jobName":"${env.JOB_NAME}","branch":"${env.BRANCH_NAME}","buildNumber":"${env.BUILD_NUMBER}","status":"${status"}'
+	"""
+}
