@@ -1,6 +1,6 @@
 <script setup>
   import LayoutArea from './components/layout/LayoutArea.vue';
-// import ProcessLayout from './components/process/ProcessLayout.vue'; ggdd
+// import ProcessLayout from './components/process/ProcessLayout.vue'; ggdd ㅎㅎㅎ
 </script>
 
 <template>
