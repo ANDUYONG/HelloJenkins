@@ -171,7 +171,8 @@ def sendStageStatus(String stageName, String status, String logs) {
     ]
 
     // 임시 JSON 파일 생성
-    writeFile file: 'payload_stage.json', text: JsonOutput.toJson(payload)
+    def jsonText = JsonOutput.toJson(payload)
+    writeFile file: 'payload_stage.json', text: jsonText
 
     // curl로 전송
     sh """
