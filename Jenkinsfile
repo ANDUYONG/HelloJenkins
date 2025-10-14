@@ -167,7 +167,7 @@ def sendStageStatus(String stageName, String status, String logs) {
 def sendOverview() {
 	try {
 		def overview = sh(
-			script: "curl -s ${env.JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe"
+			script: "curl -s ${env.JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe",
 			returnStdout: true
 		).trim()
 
