@@ -167,14 +167,17 @@ def sendStageStatus(String stageName, String status, String logs) {
 def sendOverview() {
 	try {
 		def overview = sh(
-			script: "curl -s ${env.JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe",
-			returnStdout: true
+            script: """
+                curl -s -u "${JENKINS_USER}:${JENKINS_TOKEN}" \
+                "${env.JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe"
+            """,
 		).trim()
 
 		sh """
-			curl -X POST ${env.SPRING_API}/overview \
-				-H 'Content-Type: application/json' \
-				-d '${overview}'
+            echo '${overview}' | \
+            curl -s -X POST ${env.SPRING_API}/overview \
+                -H 'Content-Type: application/json' \
+                -d @-
 		"""
 	} catch (err) {
 		echo "Overview send failed: ${err}"
