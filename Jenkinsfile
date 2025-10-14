@@ -140,8 +140,9 @@ pipeline {
 				try {
 					def logs = currentBuild.rawBuild.getLog(999999).join("\n")
 					def encodedLogs = logs.bytes.encodeBase64().toString()
+					def springApi = env.SPRING_API
 					sh """
-					curl -X POST ${SPRING_API} \
+					curl -X POST ${springApi} \
 						 -H 'Content-Type: application/json' \
 						 -d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"COMPLETED","logs":"${encodedLogs}"}' || true
 					"""
