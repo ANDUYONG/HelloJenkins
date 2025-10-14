@@ -3,7 +3,7 @@
 <<<<<<< HEAD
 // import ProcessLayout from './components/process/ProcessLayout.vue'; gg
 =======
-// import ProcessLayout from './components/process/ProcessLayout.vue'; ggdd gg
+// import ProcessLayout from './components/process/ProcessLayout.vue'; g
 >>>>>>> feature/test1
 </script>
 
