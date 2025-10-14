@@ -162,3 +162,31 @@ def sendStageStatus(String stageName, String status, String logs) {
     """
 }
 
+// -------------------------------
+// 전체 Pipeline Overview 전송
+def sendOverview() {
+	try {
+		def overview = sh(
+			script: "curl -s ${env.JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe"
+			returnStdout: true
+		).trim()
+
+		sh """
+			curl -X POST ${env.SPRING_API}/overview \
+				-H 'Content-Type: application/json' \
+				-d '${overview}'
+		"""
+	} catch (err) {
+		echo "Overview send failed: ${err}"
+	}
+}
+
+// -------------------------------
+// Pipeline 최종 상태 전송
+def sendPipelineStatus(String status) {
+	sh """
+		curl -X POST ${env.SPRING_API} \
+			-H 'Content-Type: application/json' \
+			-d '{"jobName":"${env.JOB_NAME}","branch":"${env.BRANCH_NAME}","buildNumber":"${env.BUILD_NUMBER}","status":"${status"}'
+	"""
+}
