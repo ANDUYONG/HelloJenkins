@@ -4,7 +4,7 @@ pipeline {
 	environment {
 		NODE_HOME = '/Users/duyong/.nvm/versions/node/v20.19.5/bin/node'
 		PATH = "${NODE_HOME}:${env.PATH}"
-		SPRING_API = "http://220.89.224.199:8090/api/jenkins/event"
+		SPRING_API = "http://61.81.49.136:8090/api/jenkins/event"
 		JOB_NAME = "${env.JOB_NAME}"
 		BUILD_NUMBER = "${env.BUILD_NUMBER}"
 		BRANCH_NAME = "${env.BRANCH_NAME}"
