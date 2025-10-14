@@ -1,6 +1,10 @@
 <script setup>
   import LayoutArea from './components/layout/LayoutArea.vue';
+<<<<<<< HEAD
 // import ProcessLayout from './components/process/ProcessLayout.vue'; gg
+=======
+// import ProcessLayout from './components/process/ProcessLayout.vue'; ggdd
+>>>>>>> feature/test1
 </script>
 
 <template>
