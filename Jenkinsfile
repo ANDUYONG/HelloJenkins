@@ -187,6 +187,6 @@ def sendPipelineStatus(String status) {
 	sh """
 		curl -X POST ${env.SPRING_API} \
 			-H 'Content-Type: application/json' \
-			-d '{"jobName":"${env.JOB_NAME}","branch":"${env.BRANCH_NAME}","buildNumber":"${env.BUILD_NUMBER}","status":"${status"}'
+			-d '{"jobName":"${env.JOB_NAME}","branch":"${env.BRANCH_NAME}","buildNumber":"${env.BUILD_NUMBER}","status":"${status}"'
 	"""
 }
