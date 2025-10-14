@@ -174,10 +174,32 @@ def sendStageStatus(String stageName, String status, String logs) {
 }
 
 // -------------------------------
-// 전체 Pipeline Overview 전송  
+// 전체 Pipeline Overview 전송 (Jenkins 인증 포함)
 def sendOverview() {
     try {
-        def overview = sh(script: "curl -s ${env.JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe", returnStdout: true).trim()
+        // Jenkins 사용자와 API Token 설정
+        def jenkinsUser = "YOUR_USER"       // Jenkins 사용자 ID
+        def jenkinsToken = "YOUR_API_TOKEN" // Jenkins API Token
+
+        // Jenkins Crumb 가져오기 (CSRF 방지)
+        def crumb = sh(
+            script: """
+                curl -s -u ${jenkinsUser}:${jenkinsToken} ${env.JENKINS_URL}crumbIssuer/api/json | \
+                jq -r .crumb
+            """,
+            returnStdout: true
+        ).trim()
+
+        // Workflow API 호출
+        def overview = sh(
+            script: """
+                curl -s -u ${jenkinsUser}:${jenkinsToken} -H "Jenkins-Crumb:${crumb}" \
+                    ${env.JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe
+            """,
+            returnStdout: true
+        ).trim()
+
+        // Spring Boot로 전송
         sh """
             echo '${overview}' | \
             curl -s -X POST ${env.SPRING_API}/overview \
