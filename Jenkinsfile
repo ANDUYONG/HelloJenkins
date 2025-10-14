@@ -152,20 +152,12 @@ pipeline {
 }
 
 // -------------------------------
-// Stage 단위 이벤트 전송 (branch 안전 처리)
+// Stage 단위 이벤트 전송
 import groovy.json.JsonOutput
 
 def sendStageStatus(String stageName, String status, String logs) {
-    // 로그 안에 " 가 있으면 escape
     def safeLogs = logs.replace('"', '\\"')
-
-    // BRANCH_NAME이 없으면 Git에서 현재 브랜치 가져오기
-    def branchName = env.BRANCH_NAME
-    if (!branchName) {
-        branchName = sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
-    }
-
-    // payload를 Map으로 만들고 JSON으로 변환 (특수문자 안전 처리)
+    def branchName = env.BRANCH_NAME ?: sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
     def payload = [
         jobName     : env.JOB_NAME,
         branch      : branchName,
@@ -174,7 +166,6 @@ def sendStageStatus(String stageName, String status, String logs) {
         status      : status,
         logs        : safeLogs
     ]
-
     sh """
         curl -X POST ${env.SPRING_API} \
             -H 'Content-Type: application/json' \
@@ -185,29 +176,15 @@ def sendStageStatus(String stageName, String status, String logs) {
 // -------------------------------
 // 전체 Pipeline Overview 전송
 def sendOverview() {
-	try {
-		def overview = sh(
-			script: "curl -s ${env.JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe"
-			returnStdout: true
-		).trim()
-
-		sh """
+    try {
+        def overview = sh(script: "curl -s ${env.JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe", returnStdout: true).trim()
+        sh """
             echo '${overview}' | \
             curl -s -X POST ${env.SPRING_API}/overview \
                 -H 'Content-Type: application/json' \
                 -d @-
-		"""
-	} catch (err) {
-		echo "Overview send failed: ${err}"
-	}
-}
-
-// -------------------------------
-// Pipeline 최종 상태 전송
-def sendPipelineStatus(String status) {
-	sh """
-		curl -X POST ${env.SPRING_API} \
-			-H 'Content-Type: application/json' \
-			-d '{"jobName":"${env.JOB_NAME}","branch":"${env.BRANCH_NAME}","buildNumber":"${env.BUILD_NUMBER}","status":"${status"}'
-	"""
+        """
+    } catch (err) {
+        echo "Overview send failed: ${err}"
+    }
 }
