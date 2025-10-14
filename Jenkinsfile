@@ -8,6 +8,8 @@ pipeline {
 		JOB_NAME = "${env.JOB_NAME}"
 		BUILD_NUMBER = "${env.BUILD_NUMBER}"
 		BRANCH_NAME = "${env.BRANCH_NAME}"
+		JENKINS_USER = "duyong"
+		JENKINS_API_TOKEN = credentials('hellojenkins-api-token')
 	}
 
 	stages {
@@ -177,14 +179,10 @@ def sendStageStatus(String stageName, String status, String logs) {
 // 전체 Pipeline Overview 전송 (Jenkins 인증 포함)
 def sendOverview() {
     try {
-        // Jenkins 사용자와 API Token 설정
-        def jenkinsUser = "YOUR_USER"       // Jenkins 사용자 ID
-        def jenkinsToken = "YOUR_API_TOKEN" // Jenkins API Token
-
         // Jenkins Crumb 가져오기 (CSRF 방지)
         def crumb = sh(
             script: """
-                curl -s -u ${jenkinsUser}:${jenkinsToken} ${env.JENKINS_URL}crumbIssuer/api/json | \
+                curl -s -u ${env.JENKINS_USER}:${env.JENKINS_API_TOKEN} ${env.JENKINS_URL}crumbIssuer/api/json | \
                 jq -r .crumb
             """,
             returnStdout: true
@@ -193,7 +191,7 @@ def sendOverview() {
         // Workflow API 호출
         def overview = sh(
             script: """
-                curl -s -u ${jenkinsUser}:${jenkinsToken} -H "Jenkins-Crumb:${crumb}" \
+                curl -s -u ${env.JENKINS_USER}:${env.JENKINS_API_TOKEN} -H "Jenkins-Crumb:${crumb}" \
                     ${env.JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe
             """,
             returnStdout: true
