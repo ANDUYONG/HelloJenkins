@@ -152,13 +152,33 @@ pipeline {
 }
 
 // -------------------------------
-// Stage 단위 이벤트 전송
+// Stage 단위 이벤트 전송 (branch 안전 처리)
+import groovy.json.JsonOutput
+
 def sendStageStatus(String stageName, String status, String logs) {
+    // 로그 안에 " 가 있으면 escape
     def safeLogs = logs.replace('"', '\\"')
+
+    // BRANCH_NAME이 없으면 Git에서 현재 브랜치 가져오기
+    def branchName = env.BRANCH_NAME
+    if (!branchName) {
+        branchName = sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
+    }
+
+    // payload를 Map으로 만들고 JSON으로 변환 (특수문자 안전 처리)
+    def payload = [
+        jobName     : env.JOB_NAME,
+        branch      : branchName,
+        buildNumber : env.BUILD_NUMBER,
+        stage       : stageName,
+        status      : status,
+        logs        : safeLogs
+    ]
+
     sh """
         curl -X POST ${env.SPRING_API} \
             -H 'Content-Type: application/json' \
-            -d '{"jobName":"${env.JOB_NAME}","branch":"${env.BRANCH_NAME}","buildNumber":${env.BUILD_NUMBER},"stage":"${stageName}","status":"${status}","logs":"${safeLogs}"}'
+            -d '${JsonOutput.toJson(payload)}'
     """
 }
 
