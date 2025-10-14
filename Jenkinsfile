@@ -13,7 +13,11 @@ pipeline {
 	}
 
 	stages {
-
+        stage('Test Cred') {
+            steps {
+                sh 'echo $JENKINS_API_TOKEN'
+            }
+        }
     	// -------------------------------
 		stage('Checkout') {
 			steps {
@@ -136,20 +140,18 @@ pipeline {
 		}
 		always {
 			echo "빌드 완료"
-			node {
-				script {
+			script {
+				try {
+					def logs = currentBuild.rawBuild.getLog(999999).join("\n")
+					def encodedLogs = logs.bytes.encodeBase64().toString()
 					def springApi = env.SPRING_API
-					try {
-						def logs = currentBuild.rawBuild.getLog(999999).join("\n")
-						def encodedLogs = logs.bytes.encodeBase64().toString()
-						sh """
-						curl -X POST ${springApi} \
-							-H 'Content-Type: application/json' \
-							-d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"COMPLETED","logs":"${encodedLogs}"}' || true
-						"""
-					} catch (e) {
-						echo "always block 에러: ${e}"
-					}
+					sh """
+					curl -X POST ${springApi} \
+						 -H 'Content-Type: application/json' \
+						 -d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"COMPLETED","logs":"${encodedLogs}"}' || true
+					"""
+				} catch (e) {
+					echo "always block 에러: ${e}"
 				}
 			}
 		}
