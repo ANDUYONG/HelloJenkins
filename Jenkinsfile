@@ -137,8 +137,8 @@ pipeline {
 		always {
 			echo "빌드 완료"
 			script {
+				def logs = currentBuild.rawBuild.getLog(999999).join("\n")
 				try {
-					def logs = currentBuild.rawBuild.getLog(999999).join("\n")
 					def encodedLogs = logs.bytes.encodeBase64().toString()
 					def springApi = env.SPRING_API
 					sh """
