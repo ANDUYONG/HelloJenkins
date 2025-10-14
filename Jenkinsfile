@@ -172,9 +172,10 @@ def sendOverview() {
 		).trim()
 
 		sh """
-			curl -X POST ${env.SPRING_API}/overview \
-				-H 'Content-Type: application/json' \
-				-d '${overview}'
+            echo '${overview}' | \
+            curl -s -X POST ${env.SPRING_API}/overview \
+                -H 'Content-Type: application/json' \
+                -d @-
 		"""
 	} catch (err) {
 		echo "Overview send failed: ${err}"
