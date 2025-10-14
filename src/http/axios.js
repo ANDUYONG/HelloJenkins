@@ -1,8 +1,7 @@
 import axios from 'axios'
 
-// 기본 axios 인스턴스 생성
-const http = axios.create({
-  baseURL: '/api', // 필요에 따라 변경
+// 기본 axios 인스턴스 생성ddd
+const http = axios.create({ 
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
