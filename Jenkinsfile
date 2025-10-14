@@ -153,14 +153,11 @@ pipeline {
 
 // -------------------------------
 // Stage 단위 이벤트 전송
+import groovy.json.JsonOutput
+
 def sendStageStatus(String stageName, String status, String logs) {
-    // 로그 안에 " 가 있으면 escape
     def safeLogs = logs.replace('"', '\\"')
-
-    // BRANCH_NAME이 없으면 Git에서 현재 브랜치 가져오기
     def branchName = env.BRANCH_NAME ?: sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
-
-    // payload를 Map으로 만들고 JSON으로 변환
     def payload = [
         jobName     : env.JOB_NAME,
         branch      : branchName,
@@ -169,16 +166,10 @@ def sendStageStatus(String stageName, String status, String logs) {
         status      : status,
         logs        : safeLogs
     ]
-
-    // 임시 JSON 파일 생성
-    def jsonText = JsonOutput.toJson(payload)
-    writeFile file: 'payload_stage.json', text: jsonText
-
-    // curl로 전송
     sh """
         curl -X POST ${env.SPRING_API} \
-            -H 'Content-Type: application/json' \
-            -d @payload_stage.json
+            -H "Content-Type: application/json" \
+            -d '${JsonOutput.toJson(payload)}'
     """
 }
 
@@ -186,19 +177,12 @@ def sendStageStatus(String stageName, String status, String logs) {
 // 전체 Pipeline Overview 전송 
 def sendOverview() {
     try {
-        def overview = sh(
-            script: "curl -s ${env.JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe",
-            returnStdout: true
-        ).trim()
-
-        // 임시 JSON 파일 생성
-        writeFile file: 'payload_overview.json', text: overview
-
-        // curl로 전송
+        def overview = sh(script: "curl -s ${env.JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe", returnStdout: true).trim()
         sh """
+            echo '${overview}' | \
             curl -s -X POST ${env.SPRING_API}/overview \
-                -H 'Content-Type: application/json' \
-                -d @payload_overview.json
+                -H "Content-Type: application/json" \
+                -d @-
         """
     } catch (err) {
         echo "Overview send failed: ${err}"
