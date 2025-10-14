@@ -4,7 +4,7 @@ pipeline {
 	environment {
 		NODE_HOME = '/Users/duyong/.nvm/versions/node/v20.19.5/bin/node'
 		PATH = "${NODE_HOME}:${env.PATH}"
-		SPRING_API = "http://61.81.49.136:8091/api/jenkins/event"
+		SPRING_API = "http://220.89.224.199:8090/api/jenkins/event"
 		JOB_NAME = "${env.JOB_NAME}"
 		BUILD_NUMBER = "${env.BUILD_NUMBER}"
 		BRANCH_NAME = "${env.BRANCH_NAME}"
@@ -152,13 +152,33 @@ pipeline {
 }
 
 // -------------------------------
-// Stage 단위 이벤트 전송
+// Stage 단위 이벤트 전송 (branch 안전 처리)
+import groovy.json.JsonOutput
+
 def sendStageStatus(String stageName, String status, String logs) {
+    // 로그 안에 " 가 있으면 escape
     def safeLogs = logs.replace('"', '\\"')
+
+    // BRANCH_NAME이 없으면 Git에서 현재 브랜치 가져오기
+    def branchName = env.BRANCH_NAME
+    if (!branchName) {
+        branchName = sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
+    }
+
+    // payload를 Map으로 만들고 JSON으로 변환 (특수문자 안전 처리)
+    def payload = [
+        jobName     : env.JOB_NAME,
+        branch      : branchName,
+        buildNumber : env.BUILD_NUMBER,
+        stage       : stageName,
+        status      : status,
+        logs        : safeLogs
+    ]
+
     sh """
         curl -X POST ${env.SPRING_API} \
             -H 'Content-Type: application/json' \
-            -d '{"jobName":"${env.JOB_NAME}","branch":"${env.BRANCH_NAME}","buildNumber":${env.BUILD_NUMBER},"stage":"${stageName}","status":"${status}","logs":"${safeLogs}"}'
+            -d '${JsonOutput.toJson(payload)}'
     """
 }
 
@@ -167,14 +187,15 @@ def sendStageStatus(String stageName, String status, String logs) {
 def sendOverview() {
 	try {
 		def overview = sh(
-			script: "curl -s ${env.JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe",
+			script: "curl -s ${env.JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe"
 			returnStdout: true
 		).trim()
 
 		sh """
-			curl -X POST ${env.SPRING_API}/overview \
-				-H 'Content-Type: application/json' \
-				-d '${overview}'
+            echo '${overview}' | \
+            curl -s -X POST ${env.SPRING_API}/overview \
+                -H 'Content-Type: application/json' \
+                -d @-
 		"""
 	} catch (err) {
 		echo "Overview send failed: ${err}"
@@ -187,6 +208,6 @@ def sendPipelineStatus(String status) {
 	sh """
 		curl -X POST ${env.SPRING_API} \
 			-H 'Content-Type: application/json' \
-			-d '{"jobName":"${env.JOB_NAME}","branch":"${env.BRANCH_NAME}","buildNumber":"${env.BUILD_NUMBER}","status":"${status}"'
+			-d '{"jobName":"${env.JOB_NAME}","branch":"${env.BRANCH_NAME}","buildNumber":"${env.BUILD_NUMBER}","status":"${status"}'
 	"""
 }
