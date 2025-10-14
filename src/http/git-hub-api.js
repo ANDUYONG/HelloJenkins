@@ -1,6 +1,6 @@
 import http from './axios'
 
-const ROOT_PATH = '/github/'
+const ROOT_PATH = '/api/github/'
 
 const GitHubAPI = {
     getTreeList: (branch) => http.get(getApiPath('files'), { params: { branch } }),
