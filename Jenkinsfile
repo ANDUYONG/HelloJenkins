@@ -192,8 +192,8 @@ def sendOverview() {
 
                 # 2) wfapi 호출 (Crumb 헤더 포함)
                 OUTFILE="overview-${BUILD_NUMBER}.json"
-				ROOT_NAME=$(ehco "$JOB_NAME" | cur -d'/' -f1)
-				FINAL_JOB_NAME=$(JOB_NAME | sed -n 's|{ROOT_NAME}/|/{ROOT_NAME}/job/|')
+				ROOT_NAME=$(echo "$JOB_NAME" | cut -d'/' -f1)
+				FINAL_JOB_NAME=$($JOB_NAME | sed -n 's|{ROOT_NAME}/|/{ROOT_NAME}/job/|')
                 if [ -n "$CRUMB" ]; then
                     curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" "${JENKINS_URL}job/${FINAL_JOB_NAME}/${BUILD_NUMBER}/wfapi/describe" -o "$OUTFILE" || true
                 else
