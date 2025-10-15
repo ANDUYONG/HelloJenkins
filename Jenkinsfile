@@ -190,7 +190,7 @@ def sendOverview() {
                 fi
 
 				echo "Crumb: $CRUMB"
-				echo "Calling: ${BASE_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe"
+				echo "Calling: ${JENKINS_TOKEN}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe"
 				cat "$OUTFILE"
 
                 # 2) wfapi 호출 (Crumb 헤더 포함)
