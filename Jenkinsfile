@@ -8,16 +8,10 @@ pipeline {
 		JOB_NAME = "${env.JOB_NAME}"
 		BUILD_NUMBER = "${env.BUILD_NUMBER}"
 		BRANCH_NAME = "${env.BRANCH_NAME}"
-		JENKINS_USER = "duyong"
-		JENKINS_API_TOKEN = credentials('hellojenkins-api-token')
 	}
 
 	stages {
-        stage('Test Cred') {
-            steps {
-                sh 'echo $JENKINS_API_TOKEN'
-            }
-        }
+
     	// -------------------------------
 		stage('Checkout') {
 			steps {
@@ -144,9 +138,8 @@ pipeline {
 				try {
 					def logs = currentBuild.rawBuild.getLog(999999).join("\n")
 					def encodedLogs = logs.bytes.encodeBase64().toString()
-					def springApi = env.SPRING_API
 					sh """
-					curl -X POST ${springApi} \
+					curl -X POST ${SPRING_API} \
 						 -H 'Content-Type: application/json' \
 						 -d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"COMPLETED","logs":"${encodedLogs}"}' || true
 					"""
@@ -181,28 +174,10 @@ def sendStageStatus(String stageName, String status, String logs) {
 }
 
 // -------------------------------
-// 전체 Pipeline Overview 전송 (Jenkins 인증 포함)
+// 전체 Pipeline Overview 전송  
 def sendOverview() {
     try {
-        // Jenkins Crumb 가져오기 (CSRF 방지)
-        def crumb = sh(
-            script: """
-                curl -s -u ${env.JENKINS_USER}:${env.JENKINS_API_TOKEN} ${env.JENKINS_URL}crumbIssuer/api/json | \
-                jq -r .crumb
-            """,
-            returnStdout: true
-        ).trim()
-
-        // Workflow API 호출
-        def overview = sh(
-            script: """
-                curl -s -u ${env.JENKINS_USER}:${env.JENKINS_API_TOKEN} -H "Jenkins-Crumb:${crumb}" \
-                    ${env.JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe
-            """,
-            returnStdout: true
-        ).trim()
-
-        // Spring Boot로 전송
+        def overview = sh(script: "curl -s ${env.JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe", returnStdout: true).trim()
         sh """
             echo '${overview}' | \
             curl -s -X POST ${env.SPRING_API}/overview \
