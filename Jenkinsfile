@@ -183,7 +183,7 @@ def sendOverview() {
 					set -euo pipefail # 명령이 실패, 정의되지 않은 변수를 사용, 파이프라인 중 하나라도 실패하면 전체 실패 하나라도 해당하면 스크립트 종료
 
 					# 환경 변수
-					BASE_URL = "${JENKINS_URL}"
+					BASE_URL="${JENKINS_URL}"
 
 					# 1) Crumb 가져오기 (CSRF 방지)
 					CRUMB_JSON=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${BASE_URL}crumbIssuer/api/json" || true)
@@ -207,7 +207,7 @@ def sendOverview() {
 
 					# 3) 응답 검사: 만약 파일이 HTML(즉, '<'로 시작) 이면 실패 로그 출력
 					if [ -s "$OUTFILE" ]; then
-						FIRST_CHAR=$(head -c "$OUTFILE" | tr -d '\r\n' || true)
+						FIRST_CHAR=$(head -c 1 "$OUTFILE" | tr -d '\r\n' || true)
 						if [ "$FIRST_CHAR" = "<" ]; then
 							echo "Overview appears to be HTML (likely login page or 404). Dumping start of file:"
 							head -n 50 "$OUTFILE" || true
