@@ -19,6 +19,7 @@
         selectedSavedTab?: string
         processList: Process[]
         isShowSelectSpinner: boolean
+        isShowProcess: boolean
     }
 
     export interface LeftAreaNode {
@@ -144,7 +145,8 @@
                 val: '',
             },
             processList: [],
-            isShowSelectSpinner: false
+            isShowSelectSpinner: false,
+            isShowProcess: false,
         },
         mainArea: {
             currentNode: {
@@ -195,7 +197,7 @@
         async commitAndDeploy() {
             if(!leftArea.processList.flatMap(x => x.nodes).length) return alert('변경된 파일이 존재하지 않습니다.')
             else if(!leftArea.msg) return alert('커밋 메세지를 입력하세요.')
-            else if(confirm('커밋 및 배포 하시겠습니까?')) {
+            else if(confirm('배포 자동화 과정을 시작하시겠습니까?')) {
                 await Promise.all(leftArea.processList.map(x => {
                     const list = x.nodes.map(y => {
                         return {
@@ -206,12 +208,11 @@
                     const branch = x.name
                     return GitHubAPI.commitContent({ list, branch })
                 })).then(response => {
-                    alert('배포가 완료되었습니다. : ' + response);
-                    hiddenArea.isVisible = false
+                    leftArea.isShowProcess = true
                 })
                 .catch(error => {
                     alert('배포 중 오류가 발생했습니다. 다시 시도해주세요.');
-                    hiddenArea.isVisible = false
+                    leftArea.isShowProcess = false
                 });
             }
         },
@@ -331,8 +332,8 @@
         <div>
             <slot :data="mainArea" name="mainArea"></slot>
         </div>
-        <div>
-            <slot :data="hiddenArea" name="hidden"></slot>
+        <div class="fixed inset-0 z-[9999]" id="hiddenArea">
+            <slot :data="leftArea" name="hidden"></slot>
         </div>
     </div>
 </template>
