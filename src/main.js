@@ -3,4 +3,4 @@ import './assets/main.css'
 import { createApp } from 'vue'
 import App from './App.vue'
 
-createApp(App).mount('#app') // tt 1 2 4 5 6
+createApp(App).mount('#app') // tt 1 2 4 5 6 7
