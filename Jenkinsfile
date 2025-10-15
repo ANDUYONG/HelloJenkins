@@ -177,16 +177,14 @@ def sendStageStatus(String stageName, String status, String logs) {
 // 전체 Pipeline Overview 전송  
 def sendOverview() {
     try {
-        def overview = sh(script: "curl -s ${env.JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe", returnStdout: true).trim()
-
-		writeFile file: "overview-${BUILD_NUMBER}.json", text: overview
-
-        sh """
-            echo '${overview}' | \
-            curl -s -X POST ${env.SPRING_API}/overview \
-                -H "Content-Type: application/json" \
-                -d @overview-${BUILD_NUMBER}.json || true
-        """
+        withCredentials([usernamePassword(credentialsId: 'duyong-api-token', usernameVariable: 'JENKINS_USER', passwordVariable: 'JENKINS_TOKEN')]) {
+			sh """
+				curl -s -u $JENKINS_USER:$JENKINS_TOKEN ${JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe -o overview-${BUILD_NUMBER}.json
+				curl -s -X POST ${env.SPRING_API}/overview \
+					-H "Content-Type: application/json" \
+					-d @overview-${BUILD_NUMBER}.json || true
+			"""
+		}
     } catch (err) {
         echo "Overview send failed: ${err}"
     }
