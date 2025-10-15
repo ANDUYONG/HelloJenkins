@@ -178,48 +178,42 @@ def sendStageStatus(String stageName, String status, String logs) {
 def sendOverview() {
     try {
         withCredentials([usernamePassword(credentialsId: 'duyong-api-token', usernameVariable: 'JENKINS_USER', passwordVariable: 'JENKINS_TOKEN')]) {
-			sh """
-				sh '''#!/bin/bash
-					set -euo pipefail # 명령이 실패, 정의되지 않은 변수를 사용, 파이프라인 중 하나라도 실패하면 전체 실패 하나라도 해당하면 스크립트 종료
+            sh '''#!/bin/bash
+                set -euo pipefail  # 실패 시 스크립트 종료, 정의되지 않은 변수 사용 금지, 파이프라인 중 하나 실패 시 종료
+				
+                # 1) Crumb 가져오기 (CSRF 방지)
+                CRUMB_JSON=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${JENKINS_URL}crumbIssuer/api/json" || true)
+                if command -v jq >/dev/null 2>&1; then
+                    CRUMB=$(echo "$CRUMB_JSON" | jq -r '.crumb // empty')
+                else
+                    CRUMB=$(echo "$CRUMB_JSON" | sed -n 's/.*"crumb"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' || true)
+                fi
 
-					# 1) Crumb 가져오기 (CSRF 방지)
-					CRUMB_JSON=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${JENKINS_URL}crumbIssuer/api/json" || true)
-					# 간단 검사: JSON에 crumb 필드가 있으면 jq로 뽑고, 없으면 빈값
-					if command -v jq >/dev/null 2>&1; then
-						CRUMB=$(echo "$CRUMB_JSON" | jq -r '.crumb // empty')
-					else
-						# jq가 없으면 수동 파싱
-						## crumb라는 키를 갖고 있다면 값을 반환하는 정규식
-						CRUMB=$(echo "$CRUMB_JSON" | sed -n "s/.*\"crumb\"[[:space:]]*:[[:space:]]*\"\\([^\"]*\\)\".*/\\1/p" || true) 
-					fi
+                # 2) wfapi 호출 (Crumb 헤더 포함)
+                OUTFILE="overview-${BUILD_NUMBER}.json"
+                if [ -n "$CRUMB" ]; then
+                    curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" "${JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe" -o "$OUTFILE" || true
+                else
+                    curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe" -o "$OUTFILE" || true
+                fi
 
-					# 2) wfapi 호출 (Crumb 헤더 포함)
-					OUTFILE="overview-${BUILD_NUMBER}.json"
-					if [ -n "$CRUMB" ]; then
-						curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" "${JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe" -o "$OUTFILE" || true
-					else
-						# crumb가 없을 때도 시도 (crumb가 불필요한 경우)
-						curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe" -o "$OUTFILE" || true
-					fi
+                # 3) 응답 검사: HTML일 경우 로그 출력
+                if [ -s "$OUTFILE" ]; then
+                    FIRST_CHAR=$(head -c 1 "$OUTFILE" | tr -d '\\r\\n' || true)
+                    if [ "$FIRST_CHAR" = "<" ]; then
+                        echo "Overview appears to be HTML (likely login page or 404). Dumping start of file:"
+                        head -n 50 "$OUTFILE" || true
+                    fi
+                else
+                    echo "Overview file is empty."
+                fi
 
-					# 3) 응답 검사: 만약 파일이 HTML(즉, '<'로 시작) 이면 실패 로그 출력
-					if [ -s "$OUTFILE" ]; then
-						FIRST_CHAR=$(head -c 1 "$OUTFILE" | tr -d '\r\n' || true)
-						if [ "$FIRST_CHAR" = "<" ]; then
-							echo "Overview appears to be HTML (likely login page or 404). Dumping start of file:"
-							head -n 50 "$OUTFILE" || true
-						fi
-					else
-						echo "Overview file is empty"
-					fi
-
-					# 4) 외부 API로 전송 (실패시키지 않으려면 || true)
-					curl -s -X POST "${SPRING_API}/overview" \
-						-H "Content-Type: application/json" \
-						-d @"$OUTFILE" || true
-				'''
-			"""
-		}
+                # 4) 외부 API로 전송 (실패해도 파이프라인 종료 방지)
+                curl -s -X POST "${SPRING_API}/overview" \
+                    -H "Content-Type: application/json" \
+                    -d @"$OUTFILE" || true
+            '''
+        }
     } catch (err) {
         echo "Overview send failed: ${err}"
     }
