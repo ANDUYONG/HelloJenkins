@@ -49,7 +49,7 @@ pipeline {
 							mergeTarget = "dev"
 						} else if (env.BRANCH_NAME == "dev") {
 							mergeTarget = "main"
-						} else {
+						} else if (env.BRANCH_NAME == "local") {
 							mergeTarget = "dev"
 						}
 
