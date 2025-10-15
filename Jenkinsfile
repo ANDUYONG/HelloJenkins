@@ -180,13 +180,13 @@ def sendOverview() {
         withCredentials([usernamePassword(credentialsId: 'duyong-api-token', usernameVariable: 'JENKINS_USER', passwordVariable: 'JENKINS_TOKEN')]) {
             sh '''#!/bin/bash
                 set -euo pipefail  # 실패 시 스크립트 종료, 정의되지 않은 변수 사용 금지, 파이프라인 중 하나 실패 시 종료
-				
+
                 # 1) Crumb 가져오기 (CSRF 방지)
                 CRUMB_JSON=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${JENKINS_URL}crumbIssuer/api/json" || true)
                 if command -v jq >/dev/null 2>&1; then
                     CRUMB=$(echo "$CRUMB_JSON" | jq -r '.crumb // empty')
                 else
-                    CRUMB=$(echo "$CRUMB_JSON" | sed -n 's/.*"crumb"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' || true)
+                    CRUMB=$(echo "$CRUMB_JSON" | sed -n 's/.*\"crumb\"[[:space:]]*:[[:space:]]*\"\\([^\"]*\\)\".*/\\1/p' || true)
                 fi
 
                 # 2) wfapi 호출 (Crumb 헤더 포함)
