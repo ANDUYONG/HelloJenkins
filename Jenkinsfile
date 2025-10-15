@@ -192,15 +192,15 @@ def sendOverview() {
 
                 # 2) wfapi 호출 (Crumb 헤더 포함)
                 OUTFILE="overview-${BUILD_NUMBER}.json"
-			
+				CURRENT_JOB_NAME=${JOB_NAME/HelloJenkins-Local\//HelloJenkins-Local/job/}
                 if [ -n "$CRUMB" ]; then
-                    curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" "${JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe" -o "$OUTFILE" || true
+                    curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" "${JENKINS_URL}job/${CURRENT_JOB_NAME}/${BUILD_NUMBER}/wfapi/describe" -o "$OUTFILE" || true
                 else
-                    curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe" -o "$OUTFILE" || true
+                    curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${JENKINS_URL}job/${CURRENT_JOB_NAME}/${BUILD_NUMBER}/wfapi/describe" -o "$OUTFILE" || true
                 fi
 
 				echo "Crumb: $CRUMB"
-				echo "Calling: ${JENKINS_TOKEN}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe"
+				echo "Calling: ${JENKINS_TOKEN}job/${CURRENT_JOB_NAME}/${BUILD_NUMBER}/wfapi/describe"
 				cat "$OUTFILE"
 
                 # 3) 응답 검사: HTML일 경우 로그 출력
