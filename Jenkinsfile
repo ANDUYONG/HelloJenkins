@@ -199,13 +199,13 @@ def sendOverview() {
                 # FINAL_JOB_NAME 생성: 첫 번째 /만 치환
                 FINAL_JOB_NAME=$(echo "$JOB_NAME" | sed "s@^$ROOT_NAME/@$ROOT_NAME/job/@")
                 if [ -n "$CRUMB" ]; then
-                    curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" "${JENKINS_URL}job/${FINAL_JOB_NAME}/${BUILD_NUMBER}/wfapi/describe" -o "$OUTFILE" || true
+                    curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" "${JENKINS_URL}job/${FINAL_JOB_NAME}/${BUILD_NUMBER}/api/json" -o "$OUTFILE" || true
                 else
-                    curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${JENKINS_URL}job/${FINAL_JOB_NAME}/${BUILD_NUMBER}/wfapi/describe" -o "$OUTFILE" || true
+                    curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${JENKINS_URL}job/${FINAL_JOB_NAME}/${BUILD_NUMBER}/api/json" -o "$OUTFILE" || true
                 fi
 
 				echo "Crumb: $CRUMB"
-				echo "Calling: ${JENKINS_TOKEN}job/${FINAL_JOB_NAME}/${BUILD_NUMBER}/wfapi/describe"
+				echo "Calling: ${JENKINS_TOKEN}job/${FINAL_JOB_NAME}/${BUILD_NUMBER}/api/json"
 				cat "$OUTFILE"
 
                 # 3) 응답 검사: HTML일 경우 로그 출력
