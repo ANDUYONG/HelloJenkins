@@ -189,12 +189,14 @@ def sendOverview() {
                     CRUMB=$(echo "$CRUMB_JSON" | sed -n 's/.*\"crumb\"[[:space:]]*:[[:space:]]*\"\\([^\"]*\\)\".*/\\1/p' || true)
                 fi
 
-				echo "Crumb: $CRUMB"
-				echo "Calling: ${JENKINS_TOKEN}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe"
-				cat "$OUTFILE"
 
                 # 2) wfapi 호출 (Crumb 헤더 포함)
                 OUTFILE="overview-${BUILD_NUMBER}.json"
+				
+				echo "Crumb: $CRUMB"
+				echo "Calling: ${JENKINS_TOKEN}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe"
+				cat "$OUTFILE"
+				
                 if [ -n "$CRUMB" ]; then
                     curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" "${JENKINS_URL}job/${JOB_NAME}/${BUILD_NUMBER}/wfapi/describe" -o "$OUTFILE" || true
                 else
