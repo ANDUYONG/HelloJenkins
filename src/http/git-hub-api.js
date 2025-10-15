@@ -11,7 +11,7 @@ const GitHubAPI = {
         return http.get(getApiPath('file'), { 
             params: { 
                 filePath, 
-                branch: branch ?? 'main' // undefined면 기본값 사용 hi
+                branch: branch ?? 'main' // undefined면 기본값 사용 hi 3
             } 
         })
     },
