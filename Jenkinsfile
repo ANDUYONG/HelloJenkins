@@ -182,11 +182,8 @@ def sendOverview() {
 				sh '''#!/bin/bash
 					set -euo pipefail # 명령이 실패, 정의되지 않은 변수를 사용, 파이프라인 중 하나라도 실패하면 전체 실패 하나라도 해당하면 스크립트 종료
 
-					# 환경 변수
-					BASE_URL="${JENKINS_URL}"
-
 					# 1) Crumb 가져오기 (CSRF 방지)
-					CRUMB_JSON=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${BASE_URL}crumbIssuer/api/json" || true)
+					CRUMB_JSON=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${JENKINS_URL}crumbIssuer/api/json" || true)
 					# 간단 검사: JSON에 crumb 필드가 있으면 jq로 뽑고, 없으면 빈값
 					if command -v jq >/dev/null 2>&1; then
 						CRUMB=$(echo "$CRUMB_JSON" | jq -r '.crumb // empty')
