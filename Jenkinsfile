@@ -30,6 +30,51 @@ pipeline {
 			}
 		}
 
+		// ------------------------------- 
+		stage('Merge') {
+			when {
+				anyOf {
+					expression { env.BRANCH_NAME.startsWith("feature/") }
+					expression { env.BRANCH_NAME == "dev" }
+					expression { env.BRANCH_NAME == "local" }
+				}
+			}
+			steps {
+				script {
+					sendStageStatus("Merge", "RUNNING", "Merging with target branch...")
+
+					try {
+						// 병합 대상 결정
+						def mergeTarget = ""
+						if (env.BRANCH_NAME.startsWith("feature/")) {
+							mergeTarget = "dev"
+						} else if (env.BRANCH_NAME == "dev") {
+							mergeTarget = "main"
+						} else if (env.BRANCH_NAME == "local") {
+							mergeTarget = "dev"
+						}
+
+						// mergeTarget이 있을 경우만 수행
+						if (mergeTarget) {
+							sh """
+							git fetch origin ${mergeTarget}
+							git merge origin/${mergeTarget} --no-commit --no-ff || true
+							"""
+							sendStageStatus("Merge", "SUCCESS", "Merged with ${mergeTarget}.")
+						} else {
+							sendStageStatus("Merge", "SUCCESS", "No merge required.")
+						}
+
+						sendOverview()
+					} catch (e) {
+						sendStageStatus("Merge", "FAILURE", e.toString())
+						sendOverview()
+						error("Merge failed")
+					}
+				}
+			}
+		}
+
     	// -------------------------------
 		stage('Install') {
 			steps {

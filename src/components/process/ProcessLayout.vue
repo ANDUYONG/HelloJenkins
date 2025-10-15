@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { inject } from 'vue';
 import ProcessHeaderTab from './components/children/ProcessHeaderTab.vue';
 import ProcessLog from './components/children/ProcessLog.vue';
 import ProcessLogTab from './components/children/ProcessLogTab.vue';
@@ -8,12 +9,18 @@ import ProcessHeaderLayout from './components/ProcessHeaderLayout.vue';
 import ProcessLogLayout from './components/ProcessLogLayout.vue';
 import ProcessStatusLayout from './components/ProcessStatusLayout.vue';
 import ProcessDataProvider from './provider/ProcessDataProvider.vue';
+import OverviewSocket from './socket/OverviewSocket.vue';
+import ProcessSocket from './socket/ProcessSocket.vue';
+import { LeftArea } from '../layout/provider/LayoutDataProvider.vue';
+
+const props = inject<LeftArea>('leftArea')
 </script>
 <template>
-    <ProcessDataProvider>
+    <ProcessDataProvider :props="props">
         <!-- 소켓 -->
          <template #Socket>
-            소켓 영역입니다.
+            <OverviewSocket/>
+            <ProcessSocket/>
          </template>
 
         <!-- 헤더 -->
