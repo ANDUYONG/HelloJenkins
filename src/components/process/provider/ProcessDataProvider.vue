@@ -1,5 +1,12 @@
 <script setup lang="ts">
+import { ref } from 'vue';
+import type { LeftArea } from '@/components/layout/provider/LayoutDataProvider.vue';
 
+export interface ProcessDataProviderProps {
+    props: LeftArea
+}
+
+const props = defineProps<ProcessDataProviderProps>()
 </script>
 <template>
     <div class="flex flex-col min-h-screen w-screen">
@@ -14,7 +21,7 @@
                 <slot name="Log"></slot>
             </div>
         </div>
-        <div class="hidden">
+        <div :data="props.props" class="hidden">
             <slot name="Socket"></slot>
         </div>
     </div>

@@ -1,8 +1,8 @@
 <script setup>
-import Progress from '../dialog/Progress.vue';
 import LeftArea from './LeftArea.vue';
 import MainArea from './MainArea.vue';
 import LayoutDataProvider from './provider/LayoutDataProvider.vue';
+import ProcessLayout from '../process/ProcessLayout.vue';
 </script>
 
 <template>
@@ -16,8 +16,9 @@ import LayoutDataProvider from './provider/LayoutDataProvider.vue';
             <MainArea/>
         </template>
         <!-- 숨겨진 영역 : 이후 프로세스 -->
-        <template #hidden="{ data: { isVisible } }">
-            <Progress v-if="isVisible" @close="isVisible = false"/> 
+        <template #hidden="{ data: { isShowProcess } }">
+            <!-- <Progress v-if="isVisible" @close="isVisible = false"/>  -->
+            <ProcessLayout v-if="isShowProcess"/> 
         </template>
     </LayoutDataProvider>
 </template>
