@@ -277,10 +277,10 @@ def sendOverview() {
                 # 5) Payload 생성 (heredoc 사용 → JSON 표준 준수)
                 PAYLOAD=$(cat <<EOF
 					{
-					"jobName": "$JOB_NAME",
-					"buildNumber": $BUILD,
-					"tree": $TREE_JSON,
-					"logs": $LOGS_JSON
+						"jobName": "$JOB_NAME",
+						"buildNumber": $BUILD,
+						"tree": $TREE_JSON,
+						"logs": $LOGS_JSON
 					}
 				EOF
 				)
