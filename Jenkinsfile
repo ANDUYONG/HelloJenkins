@@ -274,12 +274,21 @@ def sendOverview() {
                 done
                 LOGS_JSON="$LOGS_JSON]"
 
-                # 5) Payload 생성 (tree는 그대로 JSON, logs 문자열만 escape)
-                PAYLOAD="{\"jobName\": \"$JOB_NAME\", \"buildNumber\": $BUILD, \"tree\": $TREE_JSON, \"logs\": $LOGS_JSON}"
+                # 5) Payload 생성 (heredoc 사용 → JSON 표준 준수)
+                PAYLOAD=$(cat <<EOF
+{
+  "jobName": "$JOB_NAME",
+  "buildNumber": $BUILD,
+  "tree": $TREE_JSON,
+  "logs": $LOGS_JSON
+}
+EOF
+)
 
+                # 6) Payload 확인
                 echo "$PAYLOAD"
 
-                # 6) 외부 API 전송
+                # 7) 외부 API 전송
                 curl -s -X POST "${SPRING_API}/overview" \
                     -H "Content-Type: application/json" \
                     -d "$PAYLOAD" || true
