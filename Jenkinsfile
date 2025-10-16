@@ -291,7 +291,7 @@ def sendOverview() {
                 # 7) 외부 API 전송
                 curl -s -X POST "${SPRING_API}/overview" \
                     -H "Content-Type: application/json" \
-                    -d "$PAYLOAD" || true 
+                    -d "$PAYLOAD" || true
             '''
         }
     } catch (err) {
