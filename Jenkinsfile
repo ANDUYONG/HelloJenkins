@@ -244,10 +244,10 @@ def sendOverview() {
 			def finalJobName = sh(script: "echo \"$JOB_NAME\" | sed \"s@^${rootName}/@${rootName}/job/@\"", returnStdout: true).trim()
             // 1) Tree 데이터 가져오기
             def TREE_JSON_RAW = sh(
-                script: '''
+                script: """
                     curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" \
                          "${JENKINS_URL}job/${finalJobName}/${BUILD_NUMBER}/pipeline-overview/tree"
-                ''',
+                """,
                 returnStdout: true
             ).trim()
 
@@ -257,10 +257,10 @@ def sendOverview() {
             TREE_JSON.data.stages.each { stage ->
                 def nodeId = stage.id
                 def nodeLog = sh(
-                    script: '''
+                    script: """
                         curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" \
                              "${JENKINS_URL}job/${finalJobName}/${BUILD_NUMBER}/pipeline-overview/consoleOutput?nodeId=$nodeId"
-                    ''',
+                    """,
                     returnStdout: true
                 ).trim()
                 
@@ -277,11 +277,11 @@ def sendOverview() {
             ]
 
             // 4) 외부 API 전송
-            sh '''
+            sh """
                 curl -s -X POST "${env.SPRING_API}/overview" \
                     -H "Content-Type: application/json" \
                     -d '${JsonOutput.toJson(payload)}'
-            '''
+            """
         }
     } catch (err) {
         echo "Overview send failed: ${err}"
