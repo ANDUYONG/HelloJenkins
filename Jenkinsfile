@@ -272,8 +272,8 @@ def sendOverview() {
             def json = JsonOutput.toJson([
                 jobName: JOB_NAME,
                 buildNumber: BUILD_NUMBER,
-                tree: new JsonSlurper().parseText(TREE_JSON_RAW), // 구조 그대로
-                logs: logsList
+                tree: JsonOutput.toJson(TREE_JSON), // 구조 그대로
+                logs: JsonOutput.toJson(logsList)
             ])
 
             // 4) 출력 및 전송
