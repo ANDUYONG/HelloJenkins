@@ -240,8 +240,9 @@ import groovy.json.JsonSlurper
 def sendOverview() {
     try {
         withCredentials([usernamePassword(credentialsId: 'duyong-api-token', usernameVariable: 'JENKINS_USER', passwordVariable: 'JENKINS_TOKEN')]) {
-			def rootName = sh(script: "echo \"$JOB_NAME\" | cut -d'/' -f1", returnStdout: true).trim()
-			def finalJobName = sh(script: "echo \"$JOB_NAME\" | sed \"s@^${rootName}/@${rootName}/job/@\"", returnStdout: true).trim()
+            def rootName = sh(script: "echo \"$JOB_NAME\" | cut -d'/' -f1", returnStdout: true).trim()
+            def finalJobName = sh(script: "echo \"$JOB_NAME\" | sed \"s@^${rootName}/@${rootName}/job/@\"", returnStdout: true).trim()
+
             // 1) Tree 데이터 가져오기
             def TREE_JSON_RAW = sh(
                 script: """
@@ -252,8 +253,9 @@ def sendOverview() {
             ).trim()
 
             def TREE_JSON = new JsonSlurper().parseText(TREE_JSON_RAW)
-            // 2) 각 Node 로그 가져오기
             def logsList = []
+
+            // 2) 각 Node 로그 가져오기
             TREE_JSON.data.stages.each { stage ->
                 def nodeId = stage.id
                 def nodeLog = sh(
@@ -263,25 +265,24 @@ def sendOverview() {
                     """,
                     returnStdout: true
                 ).trim()
-                
-                // logs 객체 추가
                 logsList << [id: nodeId, log: nodeLog]
             }
 
-            // 3) Payload 생성
-			def json = groovy.json.JsonOutput.toJson([
-				jobName: JOB_NAME,
-				buildNumber: BUILD_NUMBER,
-				tree: TREE_JSON_RAW,
-				logs: LOGS_JSON_RAW
-			])
+            // 3) Safe JSON 변환
+            def json = JsonOutput.toJson([
+                jobName: JOB_NAME,
+                buildNumber: BUILD_NUMBER,
+                tree: new JsonSlurper().parseText(TREE_JSON_RAW), // 구조 그대로
+                logs: logsList
+            ])
 
-			sh """
-				echo '${json}'
-				curl -s -X POST "${env.SPRING_API}/overview" \
-					-H "Content-Type: application/json" \
-					-d '${json}'
-			"""
+            // 4) 출력 및 전송
+            sh """
+                echo '${json}'
+                curl -s -X POST "${env.SPRING_API}/overview" \
+                    -H "Content-Type: application/json" \
+                    -d '${json}'
+            """
         }
     } catch (err) {
         echo "Overview send failed: ${err}"
