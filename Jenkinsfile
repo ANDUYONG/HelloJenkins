@@ -272,15 +272,15 @@ def sendOverview() {
             def json = JsonOutput.toJson([
                 jobName: JOB_NAME,
                 buildNumber: BUILD_NUMBER,
-                tree: JsonOutput.toJson(TREE_JSON), // 구조 그대로
-                logs: JsonOutput.toJson(logsList)
+                tree: new JsonSlurper().parseText(TREE_JSON_RAW), // 구조 그대로
+                logs: new JsonSlurper().parseText(logsList)
             ])
 
             // 4) 출력 및 전송
             sh """
                 echo '${json}'
                 curl -s -X POST "${env.SPRING_API}/overview" \
-                    -H "Content-Type: application/json" \
+                    -H "Content-Type: application/json" \ 
                     -d '${json}'
             """
         }
