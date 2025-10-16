@@ -203,10 +203,9 @@ import groovy.json.JsonOutput
 
 def sendStageStatus(String stageName, String status, String command) {
     def branchName = env.BRANCH_NAME ?: sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
-    
+	def logs = sh(script: "${command} 2>&1 | tee /dev/tty", returnStdout: true).trim()
     try {
         // sh 실행 + stdout/stderr 모두 capture
-        def logs = sh(script: "${command} 2>&1 | tee /dev/tty", returnStdout: true).trim()
         status = "SUCCESS"
     } catch (e) {
         logs = e.toString()
