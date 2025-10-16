@@ -263,7 +263,7 @@ def sendOverview() {
                         "${JENKINS_URL}job/${FINAL_JOB_NAME}/${BUILD}/pipeline-overview/consoleOutput?nodeId=$NODE" || true)
 
                     # 로그 안의 따옴표, 역슬래시, 줄바꿈 escape
-                    ESCAPED_LOG=$(echo "$NODE_LOG" | sed ':a;N;$!ba;s/\\/\\\\/g;s/"/\\"/g;s/$/\\n/g')
+                    ESCAPED_LOG=$(printf '%s' "$NODE_LOG" | sed ':a;N;$!ba;s/\\/\\\\/g;s/"/\\"/g;s/$/\\n/g')
 
                     if [ "$FIRST" = true ]; then
                         LOGS_JSON="$LOGS_JSON{\"id\": \"$NODE\", \"log\": \"$ESCAPED_LOG\"}"
@@ -276,14 +276,14 @@ def sendOverview() {
 
                 # 5) Payload 생성 (heredoc 사용 → JSON 표준 준수)
                 PAYLOAD=$(cat <<EOF
-{
-  "jobName": "$JOB_NAME",
-  "buildNumber": $BUILD,
-  "tree": $TREE_JSON,
-  "logs": $LOGS_JSON
-}
-EOF
-)
+					{
+					"jobName": "$JOB_NAME",
+					"buildNumber": $BUILD,
+					"tree": $TREE_JSON,
+					"logs": $LOGS_JSON
+					}
+				EOF
+				)
 
                 # 6) Payload 확인
                 echo "$PAYLOAD"
