@@ -200,9 +200,21 @@ pipeline {
 // Stage 단위 이벤트 전송
 import groovy.json.JsonOutput
 
-def sendStageStatus(String stageName, String status, String logs) {
-    def safeLogs = logs.replace('"', '\\"')
+
+def sendStageStatus(String stageName, String status, String command) {
     def branchName = env.BRANCH_NAME ?: sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
+	def logs = sh(script: "${command} 2>&1 | tee /dev/tty", returnStdout: true).trim()
+    try {
+        // sh 실행 + stdout/stderr 모두 capture
+        status = "SUCCESS"
+    } catch (e) {
+        logs = e.toString()
+        status = "FAILURE"
+    }
+
+    // 로그 안전하게 escape
+    def safeLogs = logs.replace('"', '\\"')
+
     def payload = [
         jobName     : env.JOB_NAME,
         branch      : branchName,
@@ -211,6 +223,8 @@ def sendStageStatus(String stageName, String status, String logs) {
         status      : status,
         logs        : safeLogs
     ]
+
+    // 외부 API 전송
     sh """
         curl -X POST ${env.SPRING_API} \
             -H "Content-Type: application/json" \
@@ -219,55 +233,65 @@ def sendStageStatus(String stageName, String status, String logs) {
 }
 
 // -------------------------------
-// 전체 Pipeline Overview 전송  
+// 전체 Pipeline Overview 전송
 def sendOverview() {
     try {
         withCredentials([usernamePassword(credentialsId: 'duyong-api-token', usernameVariable: 'JENKINS_USER', passwordVariable: 'JENKINS_TOKEN')]) {
             sh '''#!/bin/bash
-                set -euo pipefail  # 실패 시 스크립트 종료, 정의되지 않은 변수 사용 금지, 파이프라인 중 하나 실패 시 종료
+                set -euo pipefail
 
-                # 1) Crumb 가져오기 (CSRF 방지)
+                # 1) CSRF Crumb 가져오기
                 CRUMB_JSON=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${JENKINS_URL}crumbIssuer/api/json" || true)
-                if command -v jq >/dev/null 2>&1; then
-                    CRUMB=$(echo "$CRUMB_JSON" | jq -r '.crumb // empty')
-                else
-                    CRUMB=$(echo "$CRUMB_JSON" | sed -n 's/.*\"crumb\"[[:space:]]*:[[:space:]]*\"\\([^\"]*\\)\".*/\\1/p' || true)
-                fi
+                CRUMB=$(echo "$CRUMB_JSON" | sed -n 's/.*"crumb"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' || true)
 
-
-                # 2) wfapi 호출 (Crumb 헤더 포함)
-                OUTFILE="overview-${BUILD_NUMBER}.json"
-
-				# ROOT_NAME 추출
+                # 2) ROOT_NAME, FINAL_JOB_NAME 계산
                 ROOT_NAME=$(echo "$JOB_NAME" | cut -d'/' -f1)
-
-                # FINAL_JOB_NAME 생성: 첫 번째 /만 치환
                 FINAL_JOB_NAME=$(echo "$JOB_NAME" | sed "s@^$ROOT_NAME/@$ROOT_NAME/job/@")
-                if [ -n "$CRUMB" ]; then
-                    curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" "${JENKINS_URL}job/${FINAL_JOB_NAME}/${BUILD_NUMBER}/wfapi/describe" -o "$OUTFILE" || true
-                else
-                    curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${JENKINS_URL}job/${FINAL_JOB_NAME}/${BUILD_NUMBER}/wfapi/describe" -o "$OUTFILE" || true
-                fi
+                BUILD="$BUILD_NUMBER"
 
-				echo "Crumb: $CRUMB"
-				echo "Calling: ${JENKINS_TOKEN}job/${FINAL_JOB_NAME}/${BUILD_NUMBER}/wfapi/describe"
-				cat "$OUTFILE"
+                # 3) Pipeline Tree 가져오기
+                TREE_JSON=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" \
+                    "${JENKINS_URL}job/${FINAL_JOB_NAME}/${BUILD}/pipeline-overview/tree" || true)
 
-                # 3) 응답 검사: HTML일 경우 로그 출력
-                if [ -s "$OUTFILE" ]; then
-                    FIRST_CHAR=$(head -c 1 "$OUTFILE" | tr -d '\\r\\n' || true)
-                    if [ "$FIRST_CHAR" = "<" ]; then
-                        echo "Overview appears to be HTML (likely login page or 404). Dumping start of file:"
-                        head -n 50 "$OUTFILE" || true
+                # 4) 각 Node 로그 가져오기
+                NODE_IDS=$(echo "$TREE_JSON" | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p')
+                LOGS_JSON="["
+                FIRST=true
+
+                for NODE in $NODE_IDS; do
+                    NODE_LOG=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" \
+                        "${JENKINS_URL}job/${FINAL_JOB_NAME}/${BUILD}/pipeline-overview/consoleOutput?nodeId=$NODE" || true)
+
+                    # 로그 안의 따옴표, 역슬래시, 줄바꿈 escape
+                    ESCAPED_LOG=$(printf '%s' "$NODE_LOG" | sed ':a;N;$!ba;s/\\/\\\\/g;s/"/\\"/g;s/$/\\n/g')
+
+                    if [ "$FIRST" = true ]; then
+                        LOGS_JSON="$LOGS_JSON{\\"id\\": \\"$NODE\\", \\"log\\": "$ESCAPED_LOG"}"
+                        FIRST=false
+                    else
+                        LOGS_JSON="$LOGS_JSON, {\\"id\\": \\"$NODE\\", \\"log\\": "$ESCAPED_LOG"}"
                     fi
-                else
-                    echo "Overview file is empty."
-                fi
+                done
+                LOGS_JSON="$LOGS_JSON]"
 
-                # 4) 외부 API로 전송 (실패해도 파이프라인 종료 방지)
+                # 5) Payload 생성 (heredoc 사용 → JSON 표준 준수)
+                PAYLOAD=$(cat <<EOF
+					{
+						"jobName": "$JOB_NAME",
+						"buildNumber": $BUILD,
+						"tree": $TREE_JSON,
+						"logs": $LOGS_JSON
+					}
+				EOF
+				)
+
+                # 6) Payload 확인
+                echo "$PAYLOAD"
+
+                # 7) 외부 API 전송
                 curl -s -X POST "${SPRING_API}/overview" \
                     -H "Content-Type: application/json" \
-                    -d @"$OUTFILE" || true
+                    -d "$PAYLOAD" || true
             '''
         }
     } catch (err) {
