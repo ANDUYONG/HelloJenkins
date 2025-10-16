@@ -240,14 +240,14 @@ def sendOverview() {
             sh '''#!/bin/bash
                 set -euo pipefail
 
-                # 1) Crumb 가져오기 (CSRF 방지)
+                # 1) CSRF Crumb 가져오기
                 CRUMB_JSON=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${JENKINS_URL}crumbIssuer/api/json" || true)
                 CRUMB=$(echo "$CRUMB_JSON" | sed -n 's/.*"crumb"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' || true)
 
                 # 2) ROOT_NAME, FINAL_JOB_NAME 계산
                 ROOT_NAME=$(echo "$JOB_NAME" | cut -d'/' -f1)
                 FINAL_JOB_NAME=$(echo "$JOB_NAME" | sed "s@^$ROOT_NAME/@$ROOT_NAME/job/@")
-                BUILD="${BUILD_NUMBER}"
+                BUILD="$BUILD_NUMBER"
 
                 # 3) Pipeline Tree 가져오기
                 TREE_JSON=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" \
@@ -262,7 +262,7 @@ def sendOverview() {
                     NODE_LOG=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" \
                         "${JENKINS_URL}job/${FINAL_JOB_NAME}/${BUILD}/pipeline-overview/consoleOutput?nodeId=$NODE" || true)
 
-                    # 로그 안에 따옴표나 줄바꿈 escape 처리
+                    # 로그 안의 따옴표, 역슬래시, 줄바꿈 escape
                     ESCAPED_LOG=$(echo "$NODE_LOG" | sed ':a;N;$!ba;s/\\/\\\\/g;s/"/\\"/g;s/$/\\n/g')
 
                     if [ "$FIRST" = true ]; then
@@ -274,11 +274,12 @@ def sendOverview() {
                 done
                 LOGS_JSON="$LOGS_JSON]"
 
-                # 5) Payload 생성 및 전송
+                # 5) Payload 생성 (tree는 그대로 JSON, logs 문자열만 escape)
                 PAYLOAD="{\"jobName\": \"$JOB_NAME\", \"buildNumber\": $BUILD, \"tree\": $TREE_JSON, \"logs\": $LOGS_JSON}"
 
                 echo "$PAYLOAD"
 
+                # 6) 외부 API 전송
                 curl -s -X POST "${SPRING_API}/overview" \
                     -H "Content-Type: application/json" \
                     -d "$PAYLOAD" || true
