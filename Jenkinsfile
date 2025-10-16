@@ -233,51 +233,55 @@ def sendStageStatus(String stageName, String status, String command) {
 }
 
 // -------------------------------
-// 전체 Pipeline Overview 전송  
+// 전체 Pipeline Overview 전송
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
 def sendOverview() {
     try {
         withCredentials([usernamePassword(credentialsId: 'duyong-api-token', usernameVariable: 'JENKINS_USER', passwordVariable: 'JENKINS_TOKEN')]) {
-            sh '''#!/bin/bash
-                set -euo pipefail
 
-                # 1) Crumb 가져오기 (CSRF 방지)
-                CRUMB_JSON=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${JENKINS_URL}crumbIssuer/api/json" || true)
-                CRUMB=$(echo "$CRUMB_JSON" | sed -n 's/.*"crumb"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' || true)
+            // 1) Tree 데이터 가져오기
+            def TREE_JSON_RAW = sh(
+                script: """
+                    curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" \
+                         "${JENKINS_URL}job/${JOB_NAME.replaceFirst(/\\/([^\\/]+)/, '/job/\$1')}/${BUILD_NUMBER}/pipeline-overview/tree"
+                """,
+                returnStdout: true
+            ).trim()
 
-                # 2) ROOT_NAME, FINAL_JOB_NAME 계산
-                ROOT_NAME=$(echo "$JOB_NAME" | cut -d'/' -f1)
-                FINAL_JOB_NAME=$(echo "$JOB_NAME" | sed "s@^$ROOT_NAME/@$ROOT_NAME/job/@")
-                BUILD="${BUILD_NUMBER}"
+            def TREE_JSON = new JsonSlurper().parseText(TREE_JSON_RAW)
 
-                # 3) Tree 데이터 가져오기
-                TREE_JSON=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" \
-                    "${JENKINS_URL}job/${FINAL_JOB_NAME}/${BUILD}/pipeline-overview/tree" || true)
+            // 2) 각 Node 로그 가져오기
+            def logsList = []
+            TREE_JSON.data.stages.each { stage ->
+                def nodeId = stage.id
+                def nodeLog = sh(
+                    script: """
+                        curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" \
+                             "${JENKINS_URL}job/${JOB_NAME.replaceFirst(/\\/([^\\/]+)/, '/job/\$1')}/${BUILD_NUMBER}/pipeline-overview/consoleOutput?nodeId=$nodeId"
+                    """,
+                    returnStdout: true
+                ).trim()
+                
+                // logs 객체 추가
+                logsList << [id: nodeId, log: nodeLog]
+            }
 
-                # 4) 각 Node 로그 가져오기
-                NODE_IDS=$(echo "$TREE_JSON" | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p')
-                LOGS_JSON="["
-                FIRST=true
+            // 3) Payload 생성
+            def payload = [
+                jobName     : env.JOB_NAME,
+                buildNumber : env.BUILD_NUMBER,
+                tree        : TREE_JSON,
+                logs        : logsList
+            ]
 
-                for NODE in $NODE_IDS; do
-                    NODE_LOG=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" \
-                        "${JENKINS_URL}job/${FINAL_JOB_NAME}/${BUILD}/pipeline-overview/consoleOutput?nodeId=$NODE" || true)
-
-                    if [ "$FIRST" = true ]; then
-                        LOGS_JSON="$LOGS_JSON{\"id\": \"$NODE\", \"log\": $NODE_LOG}"
-                        FIRST=false
-                    else
-                        LOGS_JSON="$LOGS_JSON, {\"id\": \"$NODE\", \"log\": $NODE_LOG}"
-                    fi
-                done
-                LOGS_JSON="$LOGS_JSON]"
-
-                # 5) 외부 API 전송
-                PAYLOAD="{\"jobName\": \"$JOB_NAME\", \"buildNumber\": \"$BUILD\", \"tree\": $TREE_JSON, \"logs\": $LOGS_JSON}"
-
-                curl -s -X POST "${SPRING_API}/overview" \
+            // 4) 외부 API 전송
+            sh """
+                curl -s -X POST "${env.SPRING_API}/overview" \
                     -H "Content-Type: application/json" \
-                    -d "$PAYLOAD" || true
-            '''
+                    -d '${JsonOutput.toJson(payload)}'
+            """
         }
     } catch (err) {
         echo "Overview send failed: ${err}"
