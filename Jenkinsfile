@@ -234,64 +234,55 @@ def sendStageStatus(String stageName, String status, String command) {
 
 // -------------------------------
 // 전체 Pipeline Overview 전송
-import groovy.json.JsonOutput
-import groovy.json.JsonSlurper
-
-// LazyMap 처리 전용 함수 (NonCPS로 safe)
-@NonCPS
-def makePayload(String jobName, String buildNumber, String treeJsonRaw, List logsList) {
-    def payload = [
-        jobName: jobName,
-        buildNumber: buildNumber,
-        tree: new JsonSlurper().parseText(treeJsonRaw),
-        logs: logsList
-    ]
-    return JsonOutput.toJson(payload)
-}
-
 def sendOverview() {
     try {
         withCredentials([usernamePassword(credentialsId: 'duyong-api-token', usernameVariable: 'JENKINS_USER', passwordVariable: 'JENKINS_TOKEN')]) {
+            sh '''#!/bin/bash
+                set -euo pipefail
 
-            def rootName = sh(script: "echo \"$JOB_NAME\" | cut -d'/' -f1", returnStdout: true).trim()
-            def finalJobName = sh(script: "echo \"$JOB_NAME\" | sed \"s@^${rootName}/@${rootName}/job/@\"", returnStdout: true).trim()
+                # 1) Crumb 가져오기 (CSRF 방지)
+                CRUMB_JSON=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${JENKINS_URL}crumbIssuer/api/json" || true)
+                CRUMB=$(echo "$CRUMB_JSON" | sed -n 's/.*"crumb"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' || true)
 
-            // 1️⃣ Tree JSON
-            def treeJsonRaw = sh(
-                script: """
-                    curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" \
-                         "${JENKINS_URL}job/${finalJobName}/${BUILD_NUMBER}/pipeline-overview/tree"
-                """,
-                returnStdout: true
-            ).trim()
+                # 2) ROOT_NAME, FINAL_JOB_NAME 계산
+                ROOT_NAME=$(echo "$JOB_NAME" | cut -d'/' -f1)
+                FINAL_JOB_NAME=$(echo "$JOB_NAME" | sed "s@^$ROOT_NAME/@$ROOT_NAME/job/@")
+                BUILD="${BUILD_NUMBER}"
 
-            // 2️⃣ Stage Logs
-            def parsedTree = new JsonSlurper().parseText(treeJsonRaw)
-            def logsList = []
+                # 3) Pipeline Tree 가져오기
+                TREE_JSON=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" \
+                    "${JENKINS_URL}job/${FINAL_JOB_NAME}/${BUILD}/pipeline-overview/tree" || true)
 
-            parsedTree?.data?.stages?.each { stage ->
-                def nodeId = stage.id
-                def nodeLog = sh(
-                    script: """
-                        curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" \
-                             "${JENKINS_URL}job/${finalJobName}/${BUILD_NUMBER}/pipeline-overview/consoleOutput?nodeId=$nodeId"
-                    """,
-                    returnStdout: true
-                ).trim()
+                # 4) 각 Node 로그 가져오기
+                NODE_IDS=$(echo "$TREE_JSON" | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p')
+                LOGS_JSON="["
+                FIRST=true
 
-                logsList << [id: nodeId, log: nodeLog]
-            }
+                for NODE in $NODE_IDS; do
+                    NODE_LOG=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" \
+                        "${JENKINS_URL}job/${FINAL_JOB_NAME}/${BUILD}/pipeline-overview/consoleOutput?nodeId=$NODE" || true)
 
-            // 3️⃣ LazyMap 방지를 위해 NonCPS 함수에서 직렬화
-            def payloadJson = makePayload(JOB_NAME, BUILD_NUMBER, treeJsonRaw, logsList)
+                    # 로그 안에 따옴표나 줄바꿈이 있으면 escape 처리
+                    ESCAPED_LOG=$(echo "$NODE_LOG" | sed ':a;N;$!ba;s/"/\\"/g;s/\\n/\\\\n/g')
 
-            // 4️⃣ POST 전송
-            sh """#!/bin/bash -e
-                echo '${payloadJson}'
-                curl -s -X POST "${env.SPRING_API}/overview" \
+                    if [ "$FIRST" = true ]; then
+                        LOGS_JSON="$LOGS_JSON{\"id\": \"$NODE\", \"log\": \"$ESCAPED_LOG\"}"
+                        FIRST=false
+                    else
+                        LOGS_JSON="$LOGS_JSON, {\"id\": \"$NODE\", \"log\": \"$ESCAPED_LOG\"}"
+                    fi
+                done
+                LOGS_JSON="$LOGS_JSON]"
+
+                # 5) Payload 생성 및 전송
+                # TREE_JSON 안에도 큰따옴표, 줄바꿈 등 escape 필요
+                ESCAPED_TREE=$(echo "$TREE_JSON" | sed ':a;N;$!ba;s/"/\\"/g;s/\\n/\\\\n/g')
+                PAYLOAD="{\"jobName\": \"$JOB_NAME\", \"buildNumber\": \"$BUILD\", \"tree\": \"$ESCAPED_TREE\", \"logs\": $LOGS_JSON}"
+
+                curl -s -X POST "${SPRING_API}/overview" \
                     -H "Content-Type: application/json" \
-                    -d '${payloadJson}'
-            """
+                    -d "$PAYLOAD" || true
+            '''
         }
     } catch (err) {
         echo "Overview send failed: ${err}"
