@@ -266,10 +266,10 @@ def sendOverview() {
                     ESCAPED_LOG=$(printf '%s' "$NODE_LOG" | sed ':a;N;$!ba;s/\\/\\\\/g;s/"/\\"/g;s/$/\\n/g')
 
                     if [ "$FIRST" = true ]; then
-                        LOGS_JSON="$LOGS_JSON{\"id\": \"$NODE\", \"log\": \"$ESCAPED_LOG\"}"
+                        LOGS_JSON="$LOGS_JSON{\\"id\\": \\"$NODE\\", \\"log\\": \\"$ESCAPED_LOG\\"}"
                         FIRST=false
                     else
-                        LOGS_JSON="$LOGS_JSON, {\"id\": \"$NODE\", \"log\": \"$ESCAPED_LOG\"}"
+                        LOGS_JSON="$LOGS_JSON, {\\"id\": \\"$NODE\\", \\"log\": \\"$ESCAPED_LOG\\"}"
                     fi
                 done
                 LOGS_JSON="$LOGS_JSON]"
