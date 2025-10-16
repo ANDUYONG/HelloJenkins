@@ -240,7 +240,7 @@ import groovy.json.JsonSlurper
 def sendOverview() {
     try {
         withCredentials([usernamePassword(credentialsId: 'duyong-api-token', usernameVariable: 'JENKINS_USER', passwordVariable: 'JENKINS_TOKEN')]) {
-			def finalJobName = JOB_NAME.replaceFirst(/\/([^\/]+)/, '/job/$1')
+			def finalJobName = env.JOB_NAME.replaceFirst(/\/([^\/]+)/, '/job/$1')
 
             // 1) Tree 데이터 가져오기
             def TREE_JSON_RAW = sh(
