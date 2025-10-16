@@ -200,9 +200,22 @@ pipeline {
 // Stage 단위 이벤트 전송
 import groovy.json.JsonOutput
 
-def sendStageStatus(String stageName, String status, String logs) {
-    def safeLogs = logs.replace('"', '\\"')
+
+def sendStageStatus(String stageName, String status, String command) {
     def branchName = env.BRANCH_NAME ?: sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
+    
+    try {
+        // sh 실행 + stdout/stderr 모두 capture
+        def logs = sh(script: "${command} 2>&1 | tee /dev/tty", returnStdout: true).trim()
+        status = "SUCCESS"
+    } catch (e) {
+        logs = e.toString()
+        status = "FAILURE"
+    }
+
+    // 로그 안전하게 escape
+    def safeLogs = logs.replace('"', '\\"')
+
     def payload = [
         jobName     : env.JOB_NAME,
         branch      : branchName,
@@ -211,6 +224,8 @@ def sendStageStatus(String stageName, String status, String logs) {
         status      : status,
         logs        : safeLogs
     ]
+
+    // 외부 API 전송
     sh """
         curl -X POST ${env.SPRING_API} \
             -H "Content-Type: application/json" \
