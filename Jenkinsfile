@@ -279,6 +279,8 @@ def sendOverview() {
                 ESCAPED_TREE=$(echo "$TREE_JSON" | sed ':a;N;$!ba;s/"/\\"/g;s/\\n/\\\\n/g')
                 PAYLOAD="{\"jobName\": \"$JOB_NAME\", \"buildNumber\": \"$BUILD\", \"tree\": \"$ESCAPED_TREE\", \"logs\": $LOGS_JSON}"
 
+				echo "$PAYLOAD"
+
                 curl -s -X POST "${SPRING_API}/overview" \
                     -H "Content-Type: application/json" \
                     -d "$PAYLOAD" || true
