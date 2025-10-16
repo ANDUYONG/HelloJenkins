@@ -240,18 +240,18 @@ import groovy.json.JsonSlurper
 def sendOverview() {
     try {
         withCredentials([usernamePassword(credentialsId: 'duyong-api-token', usernameVariable: 'JENKINS_USER', passwordVariable: 'JENKINS_TOKEN')]) {
+			def finalJobName = JOB_NAME.replaceFirst(/\/([^\/]+)/, '/job/$1')
 
             // 1) Tree 데이터 가져오기
             def TREE_JSON_RAW = sh(
                 script: '''
                     curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" \
-                         "${JENKINS_URL}job/${JOB_NAME.replaceFirst(/\\/([^\\/]+)/, '/job/\$1')}/${BUILD_NUMBER}/pipeline-overview/tree"
+                         "${JENKINS_URL}job/${finalJobName}/${BUILD_NUMBER}/pipeline-overview/tree"
                 ''',
                 returnStdout: true
             ).trim()
 
             def TREE_JSON = new JsonSlurper().parseText(TREE_JSON_RAW)
-
             // 2) 각 Node 로그 가져오기
             def logsList = []
             TREE_JSON.data.stages.each { stage ->
@@ -259,7 +259,7 @@ def sendOverview() {
                 def nodeLog = sh(
                     script: '''
                         curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" \
-                             "${JENKINS_URL}job/${JOB_NAME.replaceFirst(/\\/([^\\/]+)/, '/job/\$1')}/${BUILD_NUMBER}/pipeline-overview/consoleOutput?nodeId=$nodeId"
+                             "${JENKINS_URL}job/${finalJobName}/${BUILD_NUMBER}/pipeline-overview/consoleOutput?nodeId=$nodeId"
                     ''',
                     returnStdout: true
                 ).trim()
