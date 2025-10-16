@@ -262,8 +262,8 @@ def sendOverview() {
                     NODE_LOG=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" \
                         "${JENKINS_URL}job/${FINAL_JOB_NAME}/${BUILD}/pipeline-overview/consoleOutput?nodeId=$NODE" || true)
 
-                    # 로그 안에 따옴표나 줄바꿈이 있으면 escape 처리
-                    ESCAPED_LOG=$(echo "$NODE_LOG" | sed ':a;N;$!ba;s/"/\\"/g;s/\\n/\\\\n/g')
+                    # 로그 안에 따옴표나 줄바꿈 escape 처리
+                    ESCAPED_LOG=$(echo "$NODE_LOG" | sed ':a;N;$!ba;s/\\/\\\\/g;s/"/\\"/g;s/$/\\n/g')
 
                     if [ "$FIRST" = true ]; then
                         LOGS_JSON="$LOGS_JSON{\"id\": \"$NODE\", \"log\": \"$ESCAPED_LOG\"}"
@@ -275,11 +275,9 @@ def sendOverview() {
                 LOGS_JSON="$LOGS_JSON]"
 
                 # 5) Payload 생성 및 전송
-                # TREE_JSON 안에도 큰따옴표, 줄바꿈 등 escape 필요
-                ESCAPED_TREE=$(echo "$TREE_JSON" | sed ':a;N;$!ba;s/"/\\"/g;s/\\n/\\\\n/g')
-                PAYLOAD="{\"jobName\": \"$JOB_NAME\", \"buildNumber\": \"$BUILD\", \"tree\": \"$ESCAPED_TREE\", \"logs\": $LOGS_JSON}"
+                PAYLOAD="{\"jobName\": \"$JOB_NAME\", \"buildNumber\": $BUILD, \"tree\": $TREE_JSON, \"logs\": $LOGS_JSON}"
 
-				echo "$PAYLOAD"
+                echo "$PAYLOAD"
 
                 curl -s -X POST "${SPRING_API}/overview" \
                     -H "Content-Type: application/json" \
