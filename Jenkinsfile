@@ -237,6 +237,7 @@ def sendStageStatus(String stageName, String status, String command) {
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 
+@NonCPS
 def sendOverview() {
     try {
         withCredentials([usernamePassword(credentialsId: 'duyong-api-token', usernameVariable: 'JENKINS_USER', passwordVariable: 'JENKINS_TOKEN')]) {
