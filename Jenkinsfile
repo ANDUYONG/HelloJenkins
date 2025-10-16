@@ -280,7 +280,7 @@ def sendOverview() {
             sh """
                 echo '${json}'
                 curl -s -X POST "${env.SPRING_API}/overview" \
-                    -H "Content-Type: application/json" \ 
+                    -H "Content-Type: application/json" \
                     -d '${json}'
             """
         }
