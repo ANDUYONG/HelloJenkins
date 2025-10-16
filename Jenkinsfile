@@ -237,14 +237,26 @@ def sendStageStatus(String stageName, String status, String command) {
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 
+// LazyMap 처리 전용 함수 (NonCPS로 safe)
 @NonCPS
+def makePayload(String jobName, String buildNumber, String treeJsonRaw, List logsList) {
+    def payload = [
+        jobName: jobName,
+        buildNumber: buildNumber,
+        tree: new JsonSlurper().parseText(treeJsonRaw),
+        logs: logsList
+    ]
+    return JsonOutput.toJson(payload)
+}
+
 def sendOverview() {
     try {
         withCredentials([usernamePassword(credentialsId: 'duyong-api-token', usernameVariable: 'JENKINS_USER', passwordVariable: 'JENKINS_TOKEN')]) {
+
             def rootName = sh(script: "echo \"$JOB_NAME\" | cut -d'/' -f1", returnStdout: true).trim()
             def finalJobName = sh(script: "echo \"$JOB_NAME\" | sed \"s@^${rootName}/@${rootName}/job/@\"", returnStdout: true).trim()
 
-            // 1️⃣ Pipeline Tree 가져오기
+            // 1️⃣ Tree JSON
             def treeJsonRaw = sh(
                 script: """
                     curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" \
@@ -253,7 +265,7 @@ def sendOverview() {
                 returnStdout: true
             ).trim()
 
-            // 2️⃣ 파싱 후 stage별 로그 수집
+            // 2️⃣ Stage Logs
             def parsedTree = new JsonSlurper().parseText(treeJsonRaw)
             def logsList = []
 
@@ -270,20 +282,8 @@ def sendOverview() {
                 logsList << [id: nodeId, log: nodeLog]
             }
 
-            // 3️⃣ LazyMap → 문자열로 변환
-            def payload = [
-                jobName: JOB_NAME,
-                buildNumber: BUILD_NUMBER,
-                tree: new JsonSlurper().parseText(treeJsonRaw), // 구조 유지
-                logs: logsList
-            ]
-
-            // LazyMap 방지를 위해 미리 JSON 문자열화
-            def payloadJson = JsonOutput.toJson(payload)
-
-            // 메모리에서 LazyMap 제거
-            parsedTree = null
-            payload = null
+            // 3️⃣ LazyMap 방지를 위해 NonCPS 함수에서 직렬화
+            def payloadJson = makePayload(JOB_NAME, BUILD_NUMBER, treeJsonRaw, logsList)
 
             // 4️⃣ POST 전송
             sh """#!/bin/bash -e
