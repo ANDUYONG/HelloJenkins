@@ -269,14 +269,12 @@ def sendOverview() {
             }
 
             // 3) Payload 생성
-            def payload = [
-                jobName     : env.JOB_NAME,
-                buildNumber : env.BUILD_NUMBER,
-                tree        : TREE_JSON,
-                logs        : logsList
-            ]
-
-			def json = JsonOutput.toJson(payload)
+			def json = groovy.json.JsonOutput.toJson([
+				jobName: JOB_NAME,
+				buildNumber: BUILD_NUMBER,
+				tree: TREE_JSON_RAW,
+				logs: LOGS_JSON_RAW
+			])
 
 			sh """
 				echo '${json}'
