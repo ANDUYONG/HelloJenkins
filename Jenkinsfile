@@ -269,7 +269,7 @@ def sendOverview() {
                         LOGS_JSON="$LOGS_JSON{\\"id\\": \\"$NODE\\", \\"log\\": "$ESCAPED_LOG"}"
                         FIRST=false
                     else
-                        LOGS_JSON="$LOGS_JSON, {\\"id\": \\"$NODE\\", \\"log\\": "$ESCAPED_LOG"}"
+                        LOGS_JSON="$LOGS_JSON, {\\"id\\": \\"$NODE\\", \\"log\\": "$ESCAPED_LOG"}"
                     fi
                 done
                 LOGS_JSON="$LOGS_JSON]"
