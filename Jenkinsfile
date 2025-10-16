@@ -243,8 +243,8 @@ def sendOverview() {
             def rootName = sh(script: "echo \"$JOB_NAME\" | cut -d'/' -f1", returnStdout: true).trim()
             def finalJobName = sh(script: "echo \"$JOB_NAME\" | sed \"s@^${rootName}/@${rootName}/job/@\"", returnStdout: true).trim()
 
-            // 1) Tree 데이터 가져오기
-            def TREE_JSON_RAW = sh(
+            // 1️⃣ Pipeline Tree 가져오기
+            def treeJsonRaw = sh(
                 script: """
                     curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" \
                          "${JENKINS_URL}job/${finalJobName}/${BUILD_NUMBER}/pipeline-overview/tree"
@@ -252,11 +252,11 @@ def sendOverview() {
                 returnStdout: true
             ).trim()
 
-            // 2️⃣ logsList 구성
-            def parsedTree = new JsonSlurper().parseText(TREE_JSON_RAW)
+            // 2️⃣ 파싱 후 stage별 로그 수집
+            def parsedTree = new JsonSlurper().parseText(treeJsonRaw)
             def logsList = []
 
-            parsedTree.data.stages.each { stage ->
+            parsedTree?.data?.stages?.each { stage ->
                 def nodeId = stage.id
                 def nodeLog = sh(
                     script: """
@@ -265,25 +265,31 @@ def sendOverview() {
                     """,
                     returnStdout: true
                 ).trim()
+
                 logsList << [id: nodeId, log: nodeLog]
             }
 
-            // ⚠️ LazyMap을 더 이상 남기지 않기 위해 변환 후 null 처리
-            def json = JsonOutput.toJson([
+            // 3️⃣ LazyMap → 문자열로 변환
+            def payload = [
                 jobName: JOB_NAME,
                 buildNumber: BUILD_NUMBER,
-                tree: new JsonSlurper().parseText(TREE_JSON_RAW), // 구조 유지
+                tree: new JsonSlurper().parseText(treeJsonRaw), // 구조 유지
                 logs: logsList
-            ])
+            ]
 
-            parsedTree = null // LazyMap 제거
+            // LazyMap 방지를 위해 미리 JSON 문자열화
+            def payloadJson = JsonOutput.toJson(payload)
 
-            // 3️⃣ 전송
+            // 메모리에서 LazyMap 제거
+            parsedTree = null
+            payload = null
+
+            // 4️⃣ POST 전송
             sh """#!/bin/bash -e
-                echo '${json}'
+                echo '${payloadJson}'
                 curl -s -X POST "${env.SPRING_API}/overview" \
                     -H "Content-Type: application/json" \
-                    -d '${json}'
+                    -d '${payloadJson}'
             """
         }
     } catch (err) {
