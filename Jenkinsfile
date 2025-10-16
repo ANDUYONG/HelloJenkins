@@ -278,6 +278,7 @@ def sendOverview() {
 
             // 4) 외부 API 전송
             sh """
+				echo '${JsonOutput.toJson(payload).toString()}'
                 curl -s -X POST "${env.SPRING_API}/overview" \
                     -H "Content-Type: application/json" \
                     -d '${JsonOutput.toJson(payload)}'
