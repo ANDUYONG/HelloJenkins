@@ -252,11 +252,11 @@ def sendOverview() {
                 returnStdout: true
             ).trim()
 
-            def TREE_JSON = new JsonSlurper().parseText(TREE_JSON_RAW)
+            // 2️⃣ logsList 구성
+            def parsedTree = new JsonSlurper().parseText(TREE_JSON_RAW)
             def logsList = []
 
-            // 2) 각 Node 로그 가져오기
-            TREE_JSON.data.stages.each { stage ->
+            parsedTree.data.stages.each { stage ->
                 def nodeId = stage.id
                 def nodeLog = sh(
                     script: """
@@ -268,16 +268,18 @@ def sendOverview() {
                 logsList << [id: nodeId, log: nodeLog]
             }
 
-            // 3) Safe JSON 변환
+            // ⚠️ LazyMap을 더 이상 남기지 않기 위해 변환 후 null 처리
             def json = JsonOutput.toJson([
                 jobName: JOB_NAME,
                 buildNumber: BUILD_NUMBER,
-                tree: new JsonSlurper().parseText(TREE_JSON_RAW), // 구조 그대로
-                logs: new JsonSlurper().parseText(logsList)
+                tree: new JsonSlurper().parseText(TREE_JSON_RAW), // 구조 유지
+                logs: logsList
             ])
 
-            // 4) 출력 및 전송
-            sh """
+            parsedTree = null // LazyMap 제거
+
+            // 3️⃣ 전송
+            sh """#!/bin/bash -e
                 echo '${json}'
                 curl -s -X POST "${env.SPRING_API}/overview" \
                     -H "Content-Type: application/json" \
