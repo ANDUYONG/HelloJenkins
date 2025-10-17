@@ -18,6 +18,7 @@
         selectedItem: Branch | DefaultSelectItem
         selectedSavedTab?: string
         processList: Process[]
+        processItems: string[]
         isShowSelectSpinner: boolean
         isShowProcess: boolean
     }
@@ -145,6 +146,7 @@
                 val: '',
             },
             processList: [],
+            processItems: [],
             isShowSelectSpinner: false,
             isShowProcess: false,
         },
@@ -205,8 +207,13 @@
                             message: leftArea.msg,
                         }
                     })
-                    const branch = x.name
-                    return GitHubAPI.commitContent({ list, branch })
+                    if(x.nodes.length) {
+                        const branch = x.name
+                        leftArea.processItems.push(branch)
+                        return GitHubAPI.commitContent({ list, branch })
+                    } else {
+                        return null
+                    }
                 })).then(response => {
                     leftArea.isShowProcess = true
                 })

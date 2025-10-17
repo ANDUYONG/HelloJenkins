@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, inject } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
+import type { JenkinsPipelineInfo } from '../provider/process-data';
 
+const emits = defineEmits<{
+  (e: 'response', data: JenkinsPipelineInfo)
+}>()
 
 const ws = ref<WebSocket | null>(null);
 const connected = ref(false);
@@ -17,6 +21,7 @@ function connect() {
 
   ws.value.onmessage = (event) => {
     console.log('[OverviewSocket] received:', event.data);
+    emits('response', event.data)
   };
 
   ws.value.onclose = () => {

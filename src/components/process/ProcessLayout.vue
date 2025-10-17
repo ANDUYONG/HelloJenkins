@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { inject } from 'vue';
+import { INIALIZER, PipelineStage } from './provider/process-data';
 import ProcessHeaderTab from './components/children/ProcessHeaderTab.vue';
 import ProcessLog from './components/children/ProcessLog.vue';
 import ProcessLogTab from './components/children/ProcessLogTab.vue';
@@ -18,8 +19,8 @@ const props = inject<LeftArea>('leftArea')
 <template>
     <ProcessDataProvider :props="props">
         <!-- 소켓 -->
-         <template #Socket>
-            <OverviewSocket/>
+         <template #Socket="{ props: { onResponse } }">
+            <OverviewSocket @response="onResponse"/>
             <ProcessSocket/>
          </template>
 
@@ -58,11 +59,18 @@ const props = inject<LeftArea>('leftArea')
         </template>
 
         <!-- 브랜치 별 상태 표시 -->
-        <template #Status>
+        <template #Status="{ props: {
+            processItems, tabs, onHeaderTabChange, currentTab
+        }}">
             <ProcessStatusLayout>
                 <!-- 상단 영역: 제목 설정 -->
                 <template #BranchTab>
-                    <ProcessHeaderTab/>
+                    <ProcessHeaderTab
+                        :value="currentTab"
+                        :items="tabs"
+                        :processItems="processItems"
+                        @change="onHeaderTabChange"
+                    />
                 </template>
                 <!-- 컨텐트 영역: 헤더, 컨텐트 -->
                  <template #Header>
@@ -77,13 +85,19 @@ const props = inject<LeftArea>('leftArea')
         </template>
 
         <!-- Log 영역 -->
-        <template #Log>
+        <template #Log="{ props: { processItems, tree, isTotalProcess, currentLogItem, currentLogTab, currentStage, onLogTabChange } }">
             <ProcessLogLayout>
                 <template #Tab>
-                    <ProcessLogTab/>
+                    <ProcessLogTab
+                        :value="currentLogTab"
+                        :items="tree.data.stages"
+                        :processItems="processItems"
+                        :isTotalProcess="isTotalProcess"
+                        @change="onLogTabChange"
+                    />
                 </template>
                 <template #Log>
-                    <ProcessLog/>
+                    <ProcessLog :item="currentLogItem" :title="currentStage"/>
                 </template>
             </ProcessLogLayout>
         </template>
