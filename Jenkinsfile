@@ -280,7 +280,7 @@ def sendOverview() {
 					{
 						"jobName": "$JOB_NAME",
 						"buildNumber": $BUILD_NUMBER,
-						"branchName": $BRANCH_NAME,
+						"branchName": \\"$BRANCH_NAME\\",
 						"tree": $TREE_JSON,
 						"logs": $LOGS_JSON
 					}
