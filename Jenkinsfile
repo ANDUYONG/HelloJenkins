@@ -279,7 +279,8 @@ def sendOverview() {
                 PAYLOAD=$(cat <<EOF
 					{
 						"jobName": "$JOB_NAME",
-						"buildNumber": $BRANCH_NAME,
+						"buildNumber": $BUILD_NUMBER,
+						"branchName": $BRANCH_NAME,
 						"tree": $TREE_JSON,
 						"logs": $LOGS_JSON
 					}
