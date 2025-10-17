@@ -6,12 +6,6 @@ export interface ProcessDataProviderProps {
     props: LeftArea
 }
 
-export interface Socket {
-    process: ProcessSocket
-}
-export interface ProcessSocket {}
-export interface OverviewSocket {}
-
 const props = defineProps<ProcessDataProviderProps>()
 </script>
 <template>

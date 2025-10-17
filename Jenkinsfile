@@ -274,10 +274,13 @@ def sendOverview() {
                 done
                 LOGS_JSON="$LOGS_JSON]"
 
+				BRANCH_NAME=env.BRANCH_NAME ?: sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
+
                 # 5) Payload 생성 (heredoc 사용 → JSON 표준 준수)
                 PAYLOAD=$(cat <<EOF
 					{
 						"jobName": "$JOB_NAME",
+						"branchName": $BRANCH_NAME,
 						"buildNumber": $BUILD,
 						"tree": $TREE_JSON,
 						"logs": $LOGS_JSON

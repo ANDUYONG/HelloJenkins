@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, inject } from 'vue';
 
-
 const ws = ref<WebSocket | null>(null);
 const connected = ref(false);
 
@@ -17,6 +16,7 @@ function connect() {
 
   ws.value.onmessage = (event) => {
     console.log('[OverviewSocket] received:', event.data);
+    event.data
   };
 
   ws.value.onclose = () => {
