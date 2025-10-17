@@ -14,15 +14,15 @@ import { ref } from 'vue';
 <template>
   <!-- <div class="flex w-full"> -->
   <div class="w-full">
-    <!-- <LayoutArea/> -->
+    <LayoutArea/>
     <!-- <ProcessLayout/> -->
-    <div class="jenkins-container">
-    <iframe
-      :src="iframeUrl"
-      frameborder="0"
-      class="jenkins-iframe"
-    ></iframe>
-  </div>
+    <!-- <div class="jenkins-container">
+      <iframe
+        :src="iframeUrl"
+        frameborder="0"
+        class="jenkins-iframe"
+      ></iframe>
+    </div> -->
   </div>
 </template>
 
