@@ -280,7 +280,7 @@ def sendOverview() {
 					"${JENKINS_URL}/job/${FINAL_JOB_NAME}/${BUILD}/logText/progressiveText" || true)
 
 				# 5.1) TOTAL_LOG를 JSON 문자열로 에스케이프 처리 (줄바꿈, 따옴표, 역슬래시 처리)
-                ESCAPED_TOTAL_LOG=$(printf '%s' "$TOTAL_LOG_RAW" | sed ':a;N;$!ba;s/\\/\\\\/g;s/"/\\"/g;s/$/\\n/g')
+                ESCAPED_TOTAL_LOG=$(printf '%s' "$TOTAL_LOG" | sed ':a;N;$!ba;s/\\/\\\\/g;s/"/\\"/g;s/$/\\n/g')
 
                 # 5) Payload 생성 (heredoc 사용 → JSON 표준 준수)
                 PAYLOAD=$(cat <<EOF
