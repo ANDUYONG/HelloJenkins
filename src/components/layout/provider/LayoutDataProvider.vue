@@ -194,7 +194,7 @@
 
     const API = {
         selectChangeEvent() {
-            mainArea.currentNode = null
+            mainArea.currentNode = {...initModel.mainArea.currentNode}
         },
         async commitAndDeploy() {
             if(!leftArea.processList.flatMap(x => x.nodes).length) return alert('변경된 파일이 존재하지 않습니다.')

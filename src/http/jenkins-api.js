@@ -2,12 +2,12 @@ import http from './axios'
 
 const ROOT_PATH = '/api/jenkins/'
 
-const GitHubAPI = {
-    getOverview: (buildNumber) => http.get(getApiPath(`pipeline-overview/${buildNumber}`)),
+const JenkinsAPI = {
+    getOverview: (branchName, buildNumber, node) => http.get(getApiPath(`overview/${branchName}/${buildNumber}/${node}`)),
 }
 
 function getApiPath(path) {
     return ROOT_PATH + path
 }
 
-export default GitHubAPI
+export default JenkinsAPI

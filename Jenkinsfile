@@ -275,6 +275,10 @@ def sendOverview() {
                 done
                 LOGS_JSON="$LOGS_JSON]"
 
+				# 5) 실시간 로그 조회
+				TOTAL_LOG=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumn:$CRUMB" \
+					"${JENKINS_URL}/job/${FINAL_JOB_NAME}/${BUILD}/logText/progressiveText" || true)
+
                 # 5) Payload 생성 (heredoc 사용 → JSON 표준 준수)
                 PAYLOAD=$(cat <<EOF
 					{
@@ -282,7 +286,8 @@ def sendOverview() {
 						"buildNumber": $BUILD_NUMBER,
 						"branchName": "$BRANCH_NAME",
 						"tree": $TREE_JSON,
-						"logs": $LOGS_JSON
+						"logs": $LOGS_JSON,
+						"totalLog": $TOTAL_LOG
 					}
 				EOF
 				)
