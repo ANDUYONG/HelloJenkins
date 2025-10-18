@@ -21,14 +21,12 @@ const isShow = (name: string) => computed(() => {
     // 1. Total이면서 processItems에 존재하는 이름일 경우
     const total = props.isTotalProcess && props.processItems.includes(name);
     // 2. Total아니면서, NOT_READY가 아닌 경우
-    const notTotal = !props.isTotalProcess && props.value.state !== 'NOT_READY'
-
-    console.log('props', props)
+    const notTotal = !props.isTotalProcess
 
     console.log('total', total)
     console.log('notTotal', notTotal)
 
-    return total || notTotal
+    return total || notTotal || name === 'Info'
 })
 
 onMounted(() => {

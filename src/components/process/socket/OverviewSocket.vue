@@ -20,8 +20,9 @@ function connect() {
   };
 
   ws.value.onmessage = (event) => {
-    console.log('[OverviewSocket] received:', event.data);
-    emits('response', event.data)
+    const data = JSON.parse(event.data)
+    console.log('[OverviewSocket] received:', data);
+    emits('response', data)
   };
 
   ws.value.onclose = () => {
@@ -61,3 +62,5 @@ function decodeBase64(base64String) {
   return new TextDecoder('utf-8').decode(bytes);
 }
 </script>
+<template>
+</template>
