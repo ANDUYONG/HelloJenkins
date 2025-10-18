@@ -8,7 +8,7 @@ const http = axios.create({
   },
 })
 
-// 요청 인터셉터 (예: 토큰 자동 첨부)
+// 요청 인터셉터 (예: 토큰 자동 첨부) 1
 // api.interceptors.request.use(config => {
 //   // config.headers.Authorization = `Bearer ...`
 //   return config
