@@ -276,7 +276,7 @@ def sendOverview() {
                 LOGS_JSON="$LOGS_JSON]"
 
 				# 5) 실시간 로그 조회
-				TOTAL_LOG=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" \
+				TOTAL_LOG_RAW=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" \
 					"${JENKINS_URL}/job/${FINAL_JOB_NAME}/${BUILD}/logText/progressiveText" || true)
 
 				# 5.1) TOTAL_LOG를 JSON 문자열로 에스케이프 처리 (줄바꿈, 따옴표, 역슬래시 처리)
