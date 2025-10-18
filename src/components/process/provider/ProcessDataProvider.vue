@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, provide, reactive, ref } from 'vue';
 import type { LeftArea } from '@/components/layout/provider/LayoutDataProvider.vue';
-import type { JenkinsPipelineInfo, PipelineStage, ProcessDataProvider, ProcessHeaderTab } from './process-data';
+import type { JenkinsPipelineInfo, LogDetail, PipelineStage, ProcessDataProvider, ProcessHeaderTab } from './process-data';
 import { INIALIZER } from './process-data';
 import _ from 'lodash';
+import JenkinsAPI from '@/http/jenkins-api';
 
 export interface ProcessDataProviderProps {
     props: LeftArea
@@ -27,14 +28,29 @@ const propsSender = computed(() => {
         overview: {
             processItems: props.props.processItems,
             onResponse(res: JenkinsPipelineInfo) {
-
-                console.log('res', res)
                 const { branchName } = res
                 const idx = data.items.findIndex(x => x.branchName === branchName)
-                data.items[idx] = _.cloneDeep<JenkinsPipelineInfo>({
-                    ...res,
-                    tree: data.items[idx].tree,
+                data.items[idx].logs.push(res.logs[0])
+                data.items[idx].tree.data.stages = [ 
+                    _.cloneDeep(data.items[idx].tree.data.stages[0]),
+                    ..._.cloneDeep(reactive(res.tree.data.stages)), 
+                ]
+
+                const { buildNumber } = data.currentItem
+
+                JenkinsAPI.getOverview(
+                    branchName, buildNumber, data.currentItem.tree.currentLogTab
+                ).then(res => {
+                    const resData = res.data as LogDetail
+                    const currStageIdx = data.currentItem.logs.findIndex(x => x.id === data.currentItem.tree.currentLogTab)
+                    if(currStageIdx !== -1) {
+                        data.currentItem.logs[currStageIdx].log = _.cloneDeep(resData)
+                    }
+                }).catch(e => {
+                    alert('오류가 발생했습니다.')
                 })
+
+                console.log('data.items[idx].tree.data.stages', data.items[idx].tree.data.stages)
             }
         },
         status: {
@@ -48,8 +64,8 @@ const propsSender = computed(() => {
                 const exist = data.items.find(x => x.branchName === tab.branchName)
                 if(exist) {
                     data.currentItem = exist
-                    data.currentItem.tree.currentLogTab = exist.tree.data.stages[0]
-                    data.currentItem.tree.currentLogItem = exist.logs[0]
+                    data.currentItem.tree.currentLogTab = exist.tree.data.stages[0].id
+                    data.currentItem.tree.currentLogItem = exist.logs[0].id
                     data.isTotalProcess = exist.branchName === 'Total'
                 }
             },
@@ -58,17 +74,28 @@ const propsSender = computed(() => {
             processItems: props.props.processItems,
             tree: data.currentItem.tree, 
             isTotalProcess: data.isTotalProcess,
-            currentLogTab: data.currentItem.tree.currentLogTab,
-            currentLogItem: data.currentItem.tree.currentLogItem, 
-            currentStage: data.currentItem.tree.currentLogTab.name || '',
-            onLogTabChange(tab: PipelineStage, items: PipelineStage[]) {
+            currentLogTab: computed(() => data.currentItem.tree.data.stages.find(x => x.id === data.currentItem.tree.currentLogTab)).value,
+            currentLogItem: computed(() => data.currentItem.logs.filter(x => x.id === data.currentItem.tree.currentLogItem)).value, 
+            currentStage: computed(() => data.currentItem.tree.data.stages.find(x => x.id === data.currentItem.tree.currentLogTab).name).value,
+            async onLogTabChange(tab: PipelineStage, items: PipelineStage[]) {
                 console.log('onLogTabChange', tab)
-                const exist = items.find(x => x.id === tab.id)
-                if(exist) {
-                    data.currentItem.tree.currentLogTab = exist
-                    const log = data.currentItem.logs.find(x => x.id === exist.id)
-                    if(log) data.currentItem.tree.currentLogItem = log
-                }
+                const { branchName, buildNumber } = data.currentItem
+                await JenkinsAPI.getOverview(branchName, buildNumber, tab.id).then(res => {
+                    const exist = items.find(x => x.id === tab.id)
+                    if(exist) {
+                        data.currentItem.tree.currentLogTab = exist.id
+                        const log = data.currentItem.logs.find(x => x.id === exist.id)
+                        if(log) data.currentItem.tree.currentLogItem = log.id
+
+                        const resData = res.data as LogDetail
+                        const currStageIdx = data.currentItem.logs.findIndex(x => x.id === data.currentItem.tree.currentLogTab)
+                        if(currStageIdx !== -1) {
+                            data.currentItem.logs[currStageIdx].log = _.cloneDeep(resData)
+                        }
+                    }
+                }).catch(e => {
+                    alert('오류가 발생했습니다.')
+                })
             },
         }
     }
@@ -97,8 +124,8 @@ function onInit() {
 
     data.items = _.cloneDeep<JenkinsPipelineInfo[]>(items)
     data.currentItem = _.cloneDeep<JenkinsPipelineInfo>(items[0])
-    data.currentItem.tree.currentLogTab = data.currentItem.tree.data.stages[0]
-    data.currentItem.tree.currentLogItem = data.currentItem.logs[0]
+    data.currentItem.tree.currentLogTab = data.currentItem.tree.data.stages[0].id
+    data.currentItem.tree.currentLogItem = data.currentItem.logs[0].id
     data.isTotalProcess = true
 
     console.log('props', props.props.processItems)

@@ -12,11 +12,13 @@ export interface LogData {
  * 개별 로그 항목
  */
 export interface LogItem {
-    id: string;
-    log: {
-        status: string;
-        data: LogData;
-    };
+    id: string
+    log: LogDetail
+}
+
+export interface LogDetail {
+    status: string;
+    data: LogData;
 }
 
 /**
@@ -54,8 +56,8 @@ export interface PipelineTreeData {
 export interface PipelineTree {
     status: string
     data: PipelineTreeData
-    currentLogTab: PipelineStage | null
-    currentLogItem: LogItem | null
+    currentLogTab: string | null
+    currentLogItem: string | null
 }
 
 /**
@@ -67,6 +69,7 @@ export interface JenkinsPipelineInfo {
     buildNumber: number
     tree: PipelineTree
     logs: LogItem[]
+    totalLog: string
 }
 
 /**
@@ -93,7 +96,7 @@ export interface ProcessHeaderTab {
 }
 
 const INIT_LOG = {
-    id: 'total', // 빈 문자열 (노드 ID)
+    id: 'Info', // 빈 문자열 (노드 ID)
     log: {
         status: 'NOT_LOADED', // 또는 'SUCCESS', 'FAILURE' 등 상태에 맞는 초기값
         data: {
@@ -169,8 +172,8 @@ const INIT_TOTAL_LOGS = [
 ]
 
 const INIT_STAGE = {
-    id: 'Total',
-    name: 'Total',
+    id: 'Info',
+    name: 'Info',
     state: 'NOT_EXECUTED', // 초기 상태
     type: 'STAGE',
     title: '',
