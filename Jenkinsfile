@@ -275,14 +275,14 @@ def sendOverview() {
                 done
                 LOGS_JSON="$LOGS_JSON]"
 
-				# 5) 실시간 로그 조회
-				TOTAL_LOG_RAW=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" \
-					"${JENKINS_URL}/job/${FINAL_JOB_NAME}/${BUILD}/logText/progressiveText" || true)
+                # 5) 전체 빌드 로그 조회 및 Base64 인코딩
+                TOTAL_LOG_RAW=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" \
+                    "${BASE_URL}/logText/progressiveText")
 
-				# 5.1) TOTAL_LOG를 JSON 문자열로 에스케이프 처리 (줄바꿈, 따옴표, 역슬래시 처리)
-                ESCAPED_TOTAL_LOG=$(printf '%s' "$TOTAL_LOG_RAW" | sed -e ':a' -e 'N' -e '$!ba' -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\n/\\n/g')
+                # 5.1) Base64 인코딩: 줄바꿈 문자를 제거하지 않고 인코딩하여 안전하게 처리
+                BASE64_TOTAL_LOG=$(printf '%s' "$TOTAL_LOG_RAW" | base64)
 
-                # 5) Payload 생성 (heredoc 사용 → JSON 표준 준수)
+                # 6) Payload 생성 (heredoc 사용 → JSON 표준 준수)
                 PAYLOAD=$(cat <<EOF
 					{
 						"jobName": "$JOB_NAME",
@@ -290,7 +290,7 @@ def sendOverview() {
 						"branchName": "$BRANCH_NAME",
 						"tree": $TREE_JSON,
 						"logs": $LOGS_JSON,
-						"totalLog": $ESCAPED_TOTAL_LOG
+						"totalLog": "$BASE64_TOTAL_LOG"
 					}
 				EOF
 				)
