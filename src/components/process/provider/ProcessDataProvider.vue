@@ -5,6 +5,7 @@ import type { JenkinsPipelineInfo, LogDetail, PipelineStage, ProcessDataProvider
 import { INIALIZER } from './process-data';
 import _ from 'lodash';
 import JenkinsAPI from '@/http/jenkins-api';
+import GitHubAPI from '@/http/git-hub-api';
 
 export interface ProcessDataProviderProps {
     props: LeftArea
@@ -28,27 +29,37 @@ const propsSender = computed(() => {
         overview: {
             processItems: props.props.processItems,
             onResponse(res: JenkinsPipelineInfo) {
-                const { branchName } = res
+                const IsNumber = (value: string | undefined): boolean => {
+                    if (value === undefined || value === null || value.trim() === '') {
+                        return false;
+                    }
+                    const num = Number(value);
+                    return !isNaN(num) && isFinite(num);
+                }
+
+                const { branchName, totalLog, buildNumber } = res
                 const idx = data.items.findIndex(x => x.branchName === branchName)
+                data.items[idx].buildNumber = buildNumber
                 data.items[idx].logs.push(res.logs[0])
                 data.items[idx].tree.data.stages = [ 
                     _.cloneDeep(data.items[idx].tree.data.stages[0]),
                     ..._.cloneDeep(reactive(res.tree.data.stages)), 
                 ]
+                data.items[idx].totalLog = decodeBase64(totalLog)
 
-                const { buildNumber } = data.currentItem
-
-                JenkinsAPI.getOverview(
-                    branchName, buildNumber, data.currentItem.tree.currentLogTab
-                ).then(res => {
-                    const resData = res.data as LogDetail
-                    const currStageIdx = data.currentItem.logs.findIndex(x => x.id === data.currentItem.tree.currentLogTab)
-                    if(currStageIdx !== -1) {
-                        data.currentItem.logs[currStageIdx].log = _.cloneDeep(resData)
-                    }
-                }).catch(e => {
-                    alert('오류가 발생했습니다.')
-                })
+                if(buildNumber !== -1 && IsNumber(data.currentItem.tree.currentLogTab)) {
+                    JenkinsAPI.getOverview(
+                        branchName, buildNumber, data.currentItem.tree.currentLogTab
+                    ).then(res => {
+                        const resData = res.data as string[]
+                        const currStageIdx = data.currentItem.logs.findIndex(x => x.id === data.currentItem.tree.currentLogTab)
+                        if(currStageIdx !== -1) {
+                            data.currentItem.logs[currStageIdx].log.data.text = resData.join('\r\n')
+                        }
+                    }).catch(e => {
+                        alert('오류가 발생했습니다.')
+                    })
+                }
 
                 console.log('data.items[idx].tree.data.stages', data.items[idx].tree.data.stages)
             }
@@ -74,32 +85,52 @@ const propsSender = computed(() => {
             processItems: props.props.processItems,
             tree: data.currentItem.tree, 
             isTotalProcess: data.isTotalProcess,
+            totalLog: computed(() => {
+                const item = data.items.find(x => x.branchName === data.currentItem.tree.currentLogTab)
+                return item ? item.totalLog : ''
+            }).value,
             currentLogTab: computed(() => data.currentItem.tree.data.stages.find(x => x.id === data.currentItem.tree.currentLogTab)).value,
             currentLogItem: computed(() => data.currentItem.logs.filter(x => x.id === data.currentItem.tree.currentLogItem)).value, 
             currentStage: computed(() => data.currentItem.tree.data.stages.find(x => x.id === data.currentItem.tree.currentLogTab).name).value,
             async onLogTabChange(tab: PipelineStage, items: PipelineStage[]) {
+                const IsNumber = (value: string | undefined): boolean => {
+                    if (value === undefined || value === null || value.trim() === '') {
+                        return false;
+                    }
+                    const num = Number(value);
+                    return !isNaN(num) && isFinite(num);
+                }
                 console.log('onLogTabChange', tab)
+                console.log('currentItem', data.currentItem)
                 const { branchName, buildNumber } = data.currentItem
-                await JenkinsAPI.getOverview(branchName, buildNumber, tab.id).then(res => {
-                    const exist = items.find(x => x.id === tab.id)
-                    if(exist) {
-                        data.currentItem.tree.currentLogTab = exist.id
-                        const log = data.currentItem.logs.find(x => x.id === exist.id)
-                        if(log) data.currentItem.tree.currentLogItem = log.id
-
-                        const resData = res.data as LogDetail
+                const exist = items.find(x => x.id === tab.id)
+                data.currentItem.tree.currentLogTab = exist.id
+                const log = data.currentItem.logs.find(x => x.id === exist.id)
+                if(log) data.currentItem.tree.currentLogItem = log.id
+                if(buildNumber !== -1 && IsNumber(tab.id)) {
+                    await JenkinsAPI.getOverview(branchName, buildNumber, tab.id).then(res => {
+                        const resData = res.data as string[]
                         const currStageIdx = data.currentItem.logs.findIndex(x => x.id === data.currentItem.tree.currentLogTab)
                         if(currStageIdx !== -1) {
-                            data.currentItem.logs[currStageIdx].log = _.cloneDeep(resData)
+                            data.currentItem.logs[currStageIdx].log.data.text = resData.join('\r\n')
                         }
-                    }
-                }).catch(e => {
-                    alert('오류가 발생했습니다.')
-                })
+                    }).catch(e => {
+                        alert('오류가 발생했습니다.')
+                    })
+                }
             },
         }
     }
 });
+
+function decodeBase64(base64String) {
+  const binary = atob(base64String);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder('utf-8').decode(bytes);
+}
 
 function onInit() {
     const items = pipelineInfoItems.map<JenkinsPipelineInfo>(x => {
@@ -136,15 +167,15 @@ onBeforeMount(onInit)
 provide('process', data)
 </script>
 <template>
-    <div class="flex flex-col min-h-screen w-screen">
+    <div class="flex flex-col h-screen w-screen">
         <div class="flex h-[350px]">
             <slot name="Header"></slot>
         </div>
         <div class="flex h-[350px]">
             <slot :props="propsSender.status" name="Status"></slot>
         </div>
-        <div class="flex flex-4 min-h-0">
-            <div class="grow">
+        <div class="flex flex-1 h-[calc(100vh-700px)] min-h-0 overflow-hidden">
+            <div class="grow h-full">
                 <slot :props="propsSender.log" name="Log"></slot>
             </div>
         </div>

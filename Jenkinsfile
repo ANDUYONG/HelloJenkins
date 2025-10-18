@@ -283,7 +283,7 @@ def sendOverview() {
                 BASE64_TOTAL_LOG=$(printf '%s' "$TOTAL_LOG_RAW" | base64)
 
                 # 6) Payload 생성 (heredoc 사용 → JSON 표준 준수)
-                PAYLOAD=$(cat <<EOF
+                PAYLOAD=$(<<EOF
 					{
 						"jobName": "$JOB_NAME",
 						"buildNumber": $BUILD_NUMBER,

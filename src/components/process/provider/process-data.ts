@@ -95,6 +95,54 @@ export interface ProcessHeaderTab {
     branchName: string
 }
 
+/**
+ * 링크의 Href URL을 나타내는 인터페이스
+ */
+interface Href {
+  href: string;
+}
+
+/**
+ * API 링크들을 나타내는 인터페이스
+ * 일부 속성은 최상위 노드에만 있고, 일부는 하위 노드에만 있을 수 있으므로 선택적 속성으로 정의합니다.
+ */
+interface Links {
+  self: Href;
+  log?: Href;
+  console?: Href;
+}
+
+/**
+ * 파이프라인 스테이지(Stage) 내의 개별 스텝(Step) 정보를 나타내는 인터페이스
+ */
+interface StageFlowNode {
+  _links: Links;
+  id: string;
+  name: string;
+  execNode: string;
+  status: 'SUCCESS' | 'FAILURE' | 'RUNNING' | string; // 가능한 상태를 명시할 수 있음
+  parameterDescription?: string; // 스크립트 내용 등, 일부 Step에만 존재하므로 선택적 속성입니다.
+  startTimeMillis: number;
+  durationMillis: number;
+  pauseDurationMillis: number;
+  parentNodes: string[];
+}
+
+/**
+ * Jenkins Pipeline의 특정 노드(일반적으로 Stage) 상세 정보를 나타내는 최상위 인터페이스
+ */
+export interface PipelineNodeDetails {
+  _links: Links;
+  id: string;
+  name: string;
+  execNode: string;
+  status: 'SUCCESS' | 'FAILURE' | 'RUNNING' | string;
+  startTimeMillis: number;
+  durationMillis: number;
+  pauseDurationMillis: number;
+  stageFlowNodes: StageFlowNode[]; // 해당 Stage에 포함된 Step들의 목록
+}
+
 const INIT_LOG = {
     id: 'Info', // 빈 문자열 (노드 ID)
     log: {
@@ -311,6 +359,7 @@ const INIT_PIPELINES = [
             }
         },
         logs: INIT_TOTAL_LOGS,
+        totalLog: '',
     } as JenkinsPipelineInfo,
     {
         jobName: 'Ready', // 작업 이름은 빈 문자열로 초기화
@@ -323,7 +372,8 @@ const INIT_PIPELINES = [
                 stages: [INIT_STAGE] // 스테이지 목록은 빈 배열
             }
         },
-        logs: [INIT_LOG] // 로그 목록은 빈 배열
+        logs: [INIT_LOG], // 로그 목록은 빈 배열
+        totalLog: '',
     } as JenkinsPipelineInfo,
     {
         jobName: 'Ready', // 작업 이름은 빈 문자열로 초기화
@@ -336,7 +386,8 @@ const INIT_PIPELINES = [
                 stages: [INIT_STAGE] // 스테이지 목록은 빈 배열
             }
         },
-        logs: [INIT_LOG] // 로그 목록은 빈 배열
+        logs: [INIT_LOG], // 로그 목록은 빈 배열
+        totalLog: '',
     } as JenkinsPipelineInfo,
     {
         jobName: 'Ready', // 작업 이름은 빈 문자열로 초기화
@@ -349,7 +400,8 @@ const INIT_PIPELINES = [
                 stages: [INIT_STAGE] // 스테이지 목록은 빈 배열
             }
         },
-        logs: [INIT_LOG] // 로그 목록은 빈 배열
+        logs: [INIT_LOG], // 로그 목록은 빈 배열
+        totalLog: '',
     } as JenkinsPipelineInfo,
     {
         jobName: 'NotReady', // 작업 이름은 빈 문자열로 초기화
@@ -362,7 +414,8 @@ const INIT_PIPELINES = [
                 stages: [INIT_STAGE] // 스테이지 목록은 빈 배열
             }
         },
-        logs: [] // 로그 목록은 빈 배열
+        logs: [INIT_LOG], // 로그 목록은 빈 배열
+        totalLog: '',
     } as JenkinsPipelineInfo,
     {
         jobName: 'NotReady', // 작업 이름은 빈 문자열로 초기화
@@ -375,7 +428,8 @@ const INIT_PIPELINES = [
                 stages: [INIT_STAGE] // 스테이지 목록은 빈 배열
             }
         },
-        logs: [INIT_LOG] // 로그 목록은 빈 배열
+        logs: [INIT_LOG], // 로그 목록은 빈 배열
+        totalLog: '',
     } as JenkinsPipelineInfo,
 ]
 
