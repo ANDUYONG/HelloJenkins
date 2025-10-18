@@ -74,10 +74,16 @@ const propsSender = computed(() => {
                 console.log('onHeaderTabChange', tab)
                 const exist = data.items.find(x => x.branchName === tab.branchName)
                 if(exist) {
-                    data.currentItem = exist
-                    data.currentItem.tree.currentLogTab = exist.tree.data.stages[0].id
-                    data.currentItem.tree.currentLogItem = exist.logs[0].id
                     data.isTotalProcess = exist.branchName === 'Total'
+                    data.currentItem = exist
+
+                    if(data.isTotalProcess) {
+                        data.currentItem.tree.currentLogTab = exist.tree.data.stages.find(x => x.id === tab.branchName).id
+                        data.currentItem.tree.currentLogItem = exist.logs[0].id
+                    } else {
+                        data.currentItem.tree.currentLogTab = exist.tree.currentLogTab || exist.tree.data.stages[0].id
+                        data.currentItem.tree.currentLogItem = exist.tree.currentLogItem || exist.logs[0].id
+                    }
                 }
             },
         },
@@ -91,7 +97,10 @@ const propsSender = computed(() => {
             }).value,
             currentLogTab: computed(() => data.currentItem.tree.data.stages.find(x => x.id === data.currentItem.tree.currentLogTab)).value,
             currentLogItem: computed(() => data.currentItem.logs.filter(x => x.id === data.currentItem.tree.currentLogItem)).value, 
-            currentStage: computed(() => data.currentItem.tree.data.stages.find(x => x.id === data.currentItem.tree.currentLogTab).name).value,
+            currentStage: computed(() => {
+                const stage = data.currentItem.tree.data.stages.find(x => x.id === data.currentItem.tree.currentLogTab)
+                return stage ? stage.name : ''
+            }).value,
             async onLogTabChange(tab: PipelineStage, items: PipelineStage[]) {
                 const IsNumber = (value: string | undefined): boolean => {
                     if (value === undefined || value === null || value.trim() === '') {
@@ -155,8 +164,10 @@ function onInit() {
 
     data.items = _.cloneDeep<JenkinsPipelineInfo[]>(items)
     data.currentItem = _.cloneDeep<JenkinsPipelineInfo>(items[0])
-    data.currentItem.tree.currentLogTab = data.currentItem.tree.data.stages[0].id
-    data.currentItem.tree.currentLogItem = data.currentItem.logs[0].id
+
+    const defaultId = props.props.processItems[0]
+    data.currentItem.tree.currentLogTab = defaultId
+    data.currentItem.tree.currentLogItem = defaultId
     data.isTotalProcess = true
 
     console.log('props', props.props.processItems)
