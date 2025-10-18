@@ -3,7 +3,7 @@ import http from './axios'
 const ROOT_PATH = '/api/jenkins/'
 
 const JenkinsAPI = {
-    getOverview: (branchName, buildNumber, node) => http.get(getApiPath(`overview/${branchName}/${buildNumber}/${node}`)),
+    getOverview: (branchName, buildNumber, node) => http.get(getApiPath(`overview/${buildNumber}/${node}`), { params: { branchName } }),
 }
 
 function getApiPath(path) {

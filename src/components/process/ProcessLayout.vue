@@ -13,6 +13,7 @@ import ProcessDataProvider from './provider/ProcessDataProvider.vue';
 import OverviewSocket from './socket/OverviewSocket.vue';
 import ProcessSocket from './socket/ProcessSocket.vue';
 import { LeftArea } from '../layout/provider/LayoutDataProvider.vue';
+import ProcessTotalLog from './components/children/ProcessTotalLog.vue';
 
 const props = inject<LeftArea>('leftArea')
 </script>
@@ -85,7 +86,7 @@ const props = inject<LeftArea>('leftArea')
         </template>
 
         <!-- Log 영역 -->
-        <template #Log="{ props: { processItems, tree, isTotalProcess, currentLogItem, currentLogTab, currentStage, onLogTabChange } }">
+        <template #Log="{ props: { processItems, tree, isTotalProcess, currentLogItem, currentLogTab, currentStage, totalLog, onLogTabChange } }">
             <ProcessLogLayout>
                 <template #Tab>
                     <ProcessLogTab
@@ -97,7 +98,8 @@ const props = inject<LeftArea>('leftArea')
                     />
                 </template>
                 <template #Log>
-                    <ProcessLog :item="currentLogItem" :title="currentStage"/>
+                    <ProcessTotalLog v-if="isTotalProcess" :value="totalLog" :title="currentStage"/>
+                    <ProcessLog v-else :item="currentLogItem" :title="currentStage"/>
                 </template>
             </ProcessLogLayout>
         </template>
