@@ -283,7 +283,7 @@ def sendOverview() {
                 BASE64_TOTAL_LOG=$(printf '%s' "$TOTAL_LOG_RAW" | base64)
 
                 # 6) Payload 생성 (heredoc 사용 → JSON 표준 준수)
-                PAYLOAD=$(<<EOF
+                PAYLOAD=$(cat <<EOF
 					{
 						"jobName": "$JOB_NAME",
 						"buildNumber": $BUILD_NUMBER,
@@ -296,7 +296,7 @@ def sendOverview() {
 				)
 
                 # 6) Payload 확인
-                echo "$PAYLOAD"
+                # echo "$PAYLOAD"
 
                 # 7) 외부 API 전송
                 curl -s -X POST "${SPRING_API}/overview" \
