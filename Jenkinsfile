@@ -277,7 +277,7 @@ def sendOverview() {
 
                 # 5) 전체 빌드 로그 조회 및 Base64 인코딩
                 TOTAL_LOG_RAW=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" \
-                    "${BASE_URL}/logText/progressiveText")
+                    "${JENKINS_URL}job/${FINAL_JOB_NAME}/${BUILD}/logText/progressiveText")
 
                 # 5.1) Base64 인코딩: 줄바꿈 문자를 제거하지 않고 인코딩하여 안전하게 처리
                 BASE64_TOTAL_LOG=$(printf '%s' "$TOTAL_LOG_RAW" | base64)
