@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { LogItem } from '../../provider/process-data';
+import type { LogItem } from '../../provider/process-data';
 
 export interface ProcessLogTabProps {
   item: LogItem[]
@@ -48,12 +48,59 @@ watch(() => value, newVal => {
 })
 </script>
 <template>
-    <h1 class="px-[10px] py-[5px]">{{ props.title }}</h1>
-    <div class="p-[10px]">
-      <template v-for="{ log } in props.item">
-        <span class="break-all whitespace-pre-wrap overflow-scroll">
-          {{ log.data.text }}
-        </span>
-      </template>
+    <div class="log-content-wrapper">
+        <h1 class="log-title">
+            {{ props.title }}
+        </h1>
+        <div class="log-content-area">
+          <template v-for="{ log } in props.item" :key="log.data.startByte">
+            <span class="log-text">
+              {{ log.data.text }}
+            </span>
+          </template>
+        </div>
     </div>
 </template>
+<style scoped>
+.log-content-wrapper {
+    /* 이 컴포넌트 자체에 스크롤바를 추가하여 sticky title을 구현 */
+    height: 100%;
+    overflow-y: auto; 
+    display: flex;
+    flex-direction: column;
+}
+
+.log-title {
+    /* Sticky Header */
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    /* Visual distinction: darker background and border */
+    background-color: #e0e0e0; /* 밝은 회색 배경 */
+    border-bottom: 1px solid #c0c0c0; /* 구분선 */
+    padding: 10px 15px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+    flex-shrink: 0; /* 줄어들지 않음 */
+    /* Monospace font for log look */
+    font-family: monospace; 
+}
+
+.log-content-area {
+    padding: 15px;
+    background-color: #fcfcfc; /* 로그 컨텐츠 배경색 (약간 다르게) */
+    font-family: monospace; /* 로그는 Monospace 폰트 */
+    font-size: 12px;
+    color: #444; /* 로그 텍스트 색상 */
+    flex-grow: 1;
+    min-height: 0; /* flex-grow: 1 일 때 필요 */
+}
+
+.log-text {
+    display: block; /* span 대신 block 요소처럼 동작하도록 */
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+</style>

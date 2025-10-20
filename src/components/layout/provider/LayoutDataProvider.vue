@@ -331,15 +331,14 @@
 </script>
 
 <template>
-    <div class="flex">
+    <div class="flex h-screen">
         <div class="p-[10px]">
-            <h2 class="p-[8px]">Hello Jenkins !</h2>
             <slot :data="leftArea" name="leftArea"></slot>
         </div>
-        <div>
+        <div class="flex flex-col w-full">
             <slot :data="mainArea" name="mainArea"></slot>
         </div>
-        <div class="fixed inset-0 z-[9999]" id="hiddenArea">
+        <div class="fixed inset-0 z-[9999] w-screen" id="hiddenArea">
             <slot :data="leftArea" name="hidden"></slot>
         </div>
     </div>

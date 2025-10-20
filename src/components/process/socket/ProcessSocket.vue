@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, inject } from 'vue';
 
+const emits = defineEmits(['message']);
 
 const ws = ref<WebSocket | null>(null);
 const connected = ref(false);
@@ -16,7 +17,9 @@ function connect() {
   };
 
   ws.value.onmessage = (event) => {
-    console.log('[ProcessSocket] received:', event.data);
+    const data = JSON.parse(event.data)
+    console.log('[ProcessSocket] received:', data);
+    emits('message', data);
   };
 
   ws.value.onclose = () => {

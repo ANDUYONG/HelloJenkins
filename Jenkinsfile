@@ -188,6 +188,8 @@ pipeline {
 						 -H 'Content-Type: application/json' \
 						 -d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"COMPLETED","logs":"${encodedLogs}"}' || true
 					"""
+
+					sendOverview()
 				} catch (e) {
 					echo "always block 에러: ${e}"
 				}
