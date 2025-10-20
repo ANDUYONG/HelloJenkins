@@ -13,7 +13,7 @@ import { ref } from 'vue';
 
 <template>
   <!-- <div class="flex w-full"> -->
-  <div class="w-full">
+  <div id="app" class="w-screen">
     <LayoutArea/>
     <!-- <ProcessLayout/> -->
     <!-- <div class="jenkins-container">
@@ -27,18 +27,8 @@ import { ref } from 'vue';
 </template>
 
 <style setup>
-div {
+#app {
     background: #23272e;
     color: white;
-}
-
-.jenkins-container {
-  width: 100%;
-  height: 100vh; /* 화면 전체 높이 */
-}
-
-.jenkins-iframe {
-  width: 100%;
-  height: 100%;
 }
 </style>
