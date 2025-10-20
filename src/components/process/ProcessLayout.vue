@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { inject } from 'vue';
-import { INIALIZER, PipelineStage } from './provider/process-data';
 import ProcessHeaderTab from './components/children/ProcessHeaderTab.vue';
 import ProcessLog from './components/children/ProcessLog.vue';
 import ProcessLogTab from './components/children/ProcessLogTab.vue';
@@ -14,94 +13,98 @@ import OverviewSocket from './socket/OverviewSocket.vue';
 import ProcessSocket from './socket/ProcessSocket.vue';
 import { LeftArea } from '../layout/provider/LayoutDataProvider.vue';
 import ProcessTotalLog from './components/children/ProcessTotalLog.vue';
+import ProcessStatusTimeLine from './components/children/ProcessStatusTimeLine.vue';
 
 const props = inject<LeftArea>('leftArea')
 </script>
 <template>
-    <ProcessDataProvider :props="props">
-        <!-- 소켓 -->
-         <template #Socket="{ props: { onResponse } }">
-            <OverviewSocket @response="onResponse"/>
-            <ProcessSocket/>
-         </template>
+    <div id="processLayout">
+        <ProcessDataProvider :props="props">
+            <template #Socket="{ props: { onResponse } }">
+                <OverviewSocket @response="onResponse"/>
+                <ProcessSocket/>
+             </template>
+    
+            <template #Header>
+                <ProcessHeaderLayout>
+                    <template #TopLeft>
+                        left
+                    </template>
+                    <template #TopCenter>
+                        center
+                    </template>
+                    <template #TopRight>
+                        right
+                    </template>
+    
+                    <template #SubTitle>
+                        부제
+                        </template>
+    
+                    <template #Header>
+                        헤더
+                    </template>
+                    <template #Content>
+                        컨텐트
+                    </template>
 
-        <!-- 헤더 -->
-        <template #Header>
-            <ProcessHeaderLayout>
-                <!-- 상단 영역: 제목 설정 -->
-                <template #TopLeft>
-                    left
-                </template>
-                <template #TopCenter>
-                    center
-                </template>
-                <template #TopRight>
-                    right
-                </template>
-
-                <!-- 부제 영역 -->
-                 <template #SubTitle>
-                    부제
-                 </template>
-
-                <!-- 컨텐트 영역: 헤더, 컨텐트 -->
-                 <template #Header>
-                    헤더
-                 </template>
-                 <template #Content>
-                    컨텐트
-                 </template>
-
-                 <!-- 하단 영역 -->
-                  <template #Footer>
-                    하단 영역
-                  </template>
-            </ProcessHeaderLayout>
-        </template>
-
-        <!-- 브랜치 별 상태 표시 -->
-        <template #Status="{ props: {
-            processItems, tabs, onHeaderTabChange, currentTab
-        }}">
-            <ProcessStatusLayout>
-                <!-- 상단 영역: 제목 설정 -->
-                <template #BranchTab>
-                    <ProcessHeaderTab
-                        :value="currentTab"
-                        :items="tabs"
-                        :processItems="processItems"
-                        @change="onHeaderTabChange"
-                    />
-                </template>
-                <!-- 컨텐트 영역: 헤더, 컨텐트 -->
-                 <template #Header>
-                    <ProcessTotalStatus/>
-                    <ProcessStatus/>
-                 </template>
-                 <template #Content>
-                    <div>전체 진행현황 테이블</div>
-                    <div>개별 진행현황 타임라인</div>
-                 </template>
-            </ProcessStatusLayout>
-        </template>
-
-        <!-- Log 영역 -->
-        <template #Log="{ props: { processItems, tree, isTotalProcess, currentLogItem, currentLogTab, currentStage, totalLog, onLogTabChange } }">
-            <ProcessLogLayout>
-                <template #Tab>
-                    <ProcessLogTab
-                        :value="currentLogTab"
-                        :items="tree.data.stages"
-                        :processItems="processItems"
-                        :isTotalProcess="isTotalProcess"
-                        @change="onLogTabChange"
-                    />
-                </template>
-                <template #Log>
-                    <ProcessTotalLog v-if="isTotalProcess" :value="totalLog" :title="currentStage"/>
-                    <ProcessLog v-else :item="currentLogItem" :title="currentStage"/>
-                </template>
-            </ProcessLogLayout>
-        </template>
-    </ProcessDataProvider>
+                    <template #Footer>
+                        하단 영역
+                    </template>
+                </ProcessHeaderLayout>
+            </template>
+    
+            <template #Status="{ props: {
+                processItems, tabs, onHeaderTabChange, currentTab, 
+                currentType, currentTypeItems, stages, isTotalProcess
+            }}">
+                <ProcessStatusLayout :isTotal="isTotalProcess">
+                    <template #BranchTab>
+                        <ProcessHeaderTab
+                            :value="currentTab"
+                            :items="tabs"
+                            :processItems="processItems"
+                            @change="onHeaderTabChange"
+                        />
+                    </template>
+                    <template #Header>
+                        <ProcessTotalStatus
+                            :value="currentType"
+                            :items="currentTypeItems"
+                        />
+                        <ProcessStatus/>
+                        </template>
+                        <template #Content>
+                            <ProcessStatusTimeLine :isTotalProcess="isTotalProcess" :items="stages" :processItems="processItems"/>
+                        </template>
+                </ProcessStatusLayout>
+            </template>
+    
+            <template #Log="{ props: { processItems, tree, isTotalProcess, currentLogItem, currentLogTab, currentStage, totalLog, onLogTabChange } }">
+                <ProcessLogLayout>
+                    <template #Tab>
+                        <ProcessLogTab
+                            :value="currentLogTab"
+                            :items="tree.data.stages"
+                            :processItems="processItems"
+                            :isTotalProcess="isTotalProcess"
+                            @change="onLogTabChange"
+                        />
+                    </template>
+                    <template #Log>
+                        <ProcessTotalLog v-if="isTotalProcess" :value="totalLog" :title="currentStage"/>
+                        <ProcessLog v-else :item="currentLogItem" :title="currentStage"/>
+                    </template>
+                </ProcessLogLayout>
+            </template>
+        </ProcessDataProvider>
+    </div>
 </template>
+<style scoped>
+/* ProcessDataProvider의 높이를 100%로 설정하여 부모를 채우고 내부에서 flex-col로 배치되게 합니다. */
+#processLayout { /* ProcessDataProvider */
+    flex-grow: 1;
+    min-height: 0;
+    min-width: 100%;
+}
+</style>

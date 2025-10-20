@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch, nextTick } from 'vue';
-import { LogItem } from '../../provider/process-data';
+import type { LogItem } from '../../provider/process-data';
 
 export interface ProcessTotalLogProps {
   value: string
@@ -57,12 +57,55 @@ watch(value, (newValue, oldValue) => {
 });
 </script>
 <template>
-    <div ref="logContainerRef" class="h-full min-h-0 flex flex-col">
-        <h1 class="px-[10px] py-[5px]">{{ props.title }}</h1>
-        <div ref="logContainerRef" class="p-[10px]">
-            <span class="break-all whitespace-pre-wrap">
+    <div class="log-content-wrapper">
+        <h1 class="log-title">
+            {{ props.title }}
+        </h1>
+        <div ref="logContainerRef" class="log-content-area-total h-screen">
+            <span class="log-text">
               {{ value }}
             </span>
         </div>
     </div>
 </template>
+<style scoped>
+.log-content-wrapper {
+    /* 이 컴포넌트 전체가 Card 안에 들어가며, 로그 컨텐츠만 스크롤되도록 설정 */
+    display: flex;
+    flex-direction: column;
+}
+
+.log-title {
+    /* Sticky Header */
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    /* Visual distinction: darker background and border */
+    background-color: #e0e0e0; /* 밝은 회색 배경 */
+    border-bottom: 1px solid #c0c0c0; /* 구분선 */
+    padding: 10px 15px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+    flex-shrink: 0; /* 줄어들지 않음 */
+    /* Monospace font for log look */
+    font-family: monospace; 
+}
+
+.log-content-area-total {
+    flex-grow: 1; /* 남은 공간을 채움 */
+    overflow-y: auto; /* 이 영역에 스크롤바 적용 */
+    padding: 25px;
+    background-color: #fcfcfc; /* 로그 컨텐츠 배경색 (약간 다르게) */
+    font-family: monospace; /* 로그는 Monospace 폰트 */
+    font-size: 12px;
+    color: #444; /* 로그 텍스트 색상 */
+}
+
+.log-text {
+    display: block;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+</style>

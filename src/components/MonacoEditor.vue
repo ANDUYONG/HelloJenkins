@@ -1,6 +1,9 @@
 <template>
-  <div class="monaco-container absolute inset-0" ref="container" style="isolation:isolate;"></div>
+  <div class="w-full h-full relative">
+    <div ref="container" class="absolute inset-0 w-full h-full"></div>
+  </div>
 </template>
+
 
 <script setup lang="ts">
 import { ref } from 'vue'
@@ -66,7 +69,8 @@ defineExpose({ onInit })
   width: 100%;
   height: 100%;
   min-height: 0;
-  isolation: isolate;
+  position: relative;
+  overflow: hidden;
   /* absolute와 inset-0은 Tailwind에서 처리 */
 }
 </style>
