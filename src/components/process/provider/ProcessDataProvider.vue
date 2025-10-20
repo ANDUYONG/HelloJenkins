@@ -17,6 +17,10 @@ const data = reactive<ProcessDataProvider>({
     currentItem: null,
     items: [],
     isTotalProcess: false,
+    currentType: {
+        branch: 'feature',
+        status: 'ready',
+    },
 })
 
 // ✅ computed로 propsSender를 래핑
@@ -65,10 +69,13 @@ const propsSender = computed(() => {
             }
         },
         status: {
+            currentType: data.currentType,
+            currentTypeItems: INIALIZER.currentTypes,
             processItems: props.props.processItems,
             tabs: headerTabs,
             currentTab: computed(() => headerTabs.find(x => data.currentItem.branchName === x.branchName)).value,
             tree: data.currentItem.tree, 
+            stages: data.currentItem.tree.data.stages,
             isTotalProcess: data.isTotalProcess,
             onHeaderTabChange(tab: ProcessHeaderTab) {
                 console.log('onHeaderTabChange', tab)
@@ -77,14 +84,9 @@ const propsSender = computed(() => {
                     data.isTotalProcess = exist.branchName === 'Total'
                     data.currentItem = exist
 
-                    if(data.isTotalProcess) {
-                        data.currentItem.tree.currentLogTab = exist.tree.data.stages.find(x => x.id === tab.branchName).id
-                        data.currentItem.tree.currentLogItem = exist.logs[0].id
-                    } else {
-                        data.currentItem.tree.currentLogTab = exist.tree.currentLogTab || exist.tree.data.stages[0].id
-                        data.currentItem.tree.currentLogItem = exist.tree.currentLogItem || exist.logs[0].id
-                    }
-                }
+                    const currentLogTab = exist.tree.data.stages.find(x => x.id === tab.branchName)
+                    data.currentItem.tree.currentLogTab = currentLogTab ? currentLogTab.id : data.currentItem.tree.currentLogTab
+                    data.currentItem.tree.currentLogItem = data.currentItem.tree.currentLogTab                }
             },
         },
         log: {
@@ -142,28 +144,8 @@ function decodeBase64(base64String) {
 }
 
 function onInit() {
-    const items = pipelineInfoItems.map<JenkinsPipelineInfo>(x => {
-        return {
-            ...x,
-            tree: {
-                ...x.tree,
-                data: {
-                    ...x.tree.data,
-                    stages: [
-                        ...x.tree.data.stages.map(y => {
-                            return {
-                                ...y,
-                                state: props.props.processItems.includes(y.name) || y.name === 'Total' ? 'NOT_EXECUTED' : 'NOT_READY'
-                            }
-                        })
-                    ]
-                }
-            }
-        }
-    })
-
-    data.items = _.cloneDeep<JenkinsPipelineInfo[]>(items)
-    data.currentItem = _.cloneDeep<JenkinsPipelineInfo>(items[0])
+    data.items = _.cloneDeep<JenkinsPipelineInfo[]>(pipelineInfoItems)
+    data.currentItem = _.cloneDeep<JenkinsPipelineInfo>(data.items[0])
 
     const defaultId = props.props.processItems[0]
     data.currentItem.tree.currentLogTab = defaultId
@@ -178,16 +160,22 @@ onBeforeMount(onInit)
 provide('process', data)
 </script>
 <template>
-    <div class="flex flex-col h-screen w-screen">
+    <div class="jenkins-blue-ocean-light-container flex flex-col h-screen w-screen gap-[15px]">
         <div class="flex h-[350px]">
-            <slot name="Header"></slot>
+            <div class="jenkins-card">
+                <slot name="Header"></slot>
+            </div>
         </div>
         <div class="flex h-[350px]">
-            <slot :props="propsSender.status" name="Status"></slot>
+            <div class="jenkins-card">
+                <slot :props="propsSender.status" name="Status"></slot>
+            </div>
         </div>
-        <div class="flex flex-1 h-[calc(100vh-700px)] min-h-0 overflow-hidden">
-            <div class="grow h-full">
-                <slot :props="propsSender.log" name="Log"></slot>
+        <div class="flex flex-1 h-[400px] overflow-hidden">
+            <div class="jenkins-card">
+                <div>
+                    <slot :props="propsSender.log" name="Log"></slot>
+                </div>
             </div>
         </div>
         <div :data="props.props" class="hidden">
@@ -197,9 +185,23 @@ provide('process', data)
 </template>
 
 <style setup>
-    div {
-        background: aliceblue;
-        border: 1px solid black;
-        color: black;
-    }
+/* 전체 레이아웃 컨테이너 */
+.jenkins-blue-ocean-light-container {
+    /* 전체 배경색: Blue Ocean UI의 밝은 회색 계열 */
+    background-color: #f7f7f7; /* Light Mode 배경 */
+    height: 100vh; /* 뷰포트 전체 높이 */
+    width: 100%;
+    padding: 15px; /* 전체 영역에 여백 추가 */
+}
+
+/* 각각의 영역(Header, Status, Log)을 위한 Card 스타일 */
+.jenkins-card {
+    /* 카드를 하얗게, 입체적인 효과를 위해 box-shadow 적용 */
+    background-color: #ffffff;
+    border-radius: 8px; /* 둥근 모서리 */
+    /* 입체적인 효과를 위한 그림자: 약간 뜨는 느낌 */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    overflow: hidden; /* 내부 컨텐츠가 Card 밖으로 나가지 않도록 */
+}
 </style>

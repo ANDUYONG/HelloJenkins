@@ -60,11 +60,14 @@
     watch(() => data.currentNode, newVal => editor.value.onInit())
 </script>
 <template>
-    <h3 class="p-[8px]">{{ data.currentNode && data.currentNode.path ? data.currentNode.path.replace('/', ' > ') : '왼쪽 트리에서 파일을 선택해주세요.' }}</h3>
-    <MonacoEditor
-        ref="editor"
-        v-model="data.currentNode.decodedData"
-        :language="getEditorType"
-        class="bg-[#1e1e1e] p-[5px] pt-[20px]"
-    />
+
+    <h3 class="p-[8px]">{{ data.currentNode && data.currentNode.path ? data.currentNode.path.split('/').join(' > ') : '왼쪽 트리에서 파일을 선택해주세요.' }}</h3>
+    <div class="flex flex-col h-screen w-full">
+        <MonacoEditor
+            ref="editor"
+            v-model="data.currentNode.decodedData"
+            :language="getEditorType"
+            class="flex-1 bg-[#1e1e1e] p-[5px] pt-[20px]"
+        />
+    </div>
 </template>

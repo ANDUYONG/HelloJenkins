@@ -79,6 +79,7 @@ export interface ProcessDataProvider {
     currentItem: JenkinsPipelineInfo | null
     items: JenkinsPipelineInfo[]
     isTotalProcess: boolean
+    currentType: CurrentType
 }
 
 /**
@@ -156,11 +157,16 @@ const INIT_LOG = {
     }
 }
 
+export interface CurrentType {
+    branch: 'feature' | 'dev' | 'main'
+    status: 'ready' | 'running' | 'fail' | 'success'
+}
+
 const INIT_TOTAL_LOGS = [
     {
         id: 'feature/test1', // 빈 문자열 (노드 ID)
         log: {
-            status: 'NOT_READY', // 또는 'SUCCESS', 'FAILURE' 등 상태에 맞는 초기값
+            status: 'running', // 또는 'SUCCESS', 'FAILURE' 등 상태에 맞는 초기값
             data: {
                 text: '', // 빈 문자열
                 startByte: 0,
@@ -172,7 +178,7 @@ const INIT_TOTAL_LOGS = [
     {
         id: 'feature/test2', // 빈 문자열 (노드 ID)
         log: {
-            status: 'NOT_READY', // 또는 'SUCCESS', 'FAILURE' 등 상태에 맞는 초기값
+            status: 'running', // 또는 'SUCCESS', 'FAILURE' 등 상태에 맞는 초기값
             data: {
                 text: '', // 빈 문자열
                 startByte: 0,
@@ -184,7 +190,7 @@ const INIT_TOTAL_LOGS = [
     {
         id: 'feature/test3', // 빈 문자열 (노드 ID)
         log: {
-            status: 'NOT_READY', // 또는 'SUCCESS', 'FAILURE' 등 상태에 맞는 초기값
+            status: 'running', // 또는 'SUCCESS', 'FAILURE' 등 상태에 맞는 초기값
             data: {
                 text: '', // 빈 문자열
                 startByte: 0,
@@ -196,7 +202,7 @@ const INIT_TOTAL_LOGS = [
     {
         id: 'dev', // 빈 문자열 (노드 ID)
         log: {
-            status: 'NOT_READY', // 또는 'SUCCESS', 'FAILURE' 등 상태에 맞는 초기값
+            status: 'running', // 또는 'SUCCESS', 'FAILURE' 등 상태에 맞는 초기값
             data: {
                 text: '', // 빈 문자열
                 startByte: 0,
@@ -208,7 +214,7 @@ const INIT_TOTAL_LOGS = [
     {
         id: 'main', // 빈 문자열 (노드 ID)
         log: {
-            status: 'NOT_READY', // 또는 'SUCCESS', 'FAILURE' 등 상태에 맞는 초기값
+            status: 'running', // 또는 'SUCCESS', 'FAILURE' 등 상태에 맞는 초기값
             data: {
                 text: '', // 빈 문자열
                 startByte: 0,
@@ -241,7 +247,7 @@ const INIT_TOTAL_STAGES = [
     {
         id: 'feature/test1',
         name: 'feature/test1',
-        state: 'NOT_EXECUTED', // 초기 상태
+        state: 'running', // 초기 상태
         type: 'STAGE',
         title: '',
         pauseDurationMillis: 0,
@@ -258,7 +264,7 @@ const INIT_TOTAL_STAGES = [
     {
         id: 'feature/test2',
         name: 'feature/test2',
-        state: 'NOT_EXECUTED', // 초기 상태
+        state: 'running', // 초기 상태
         type: 'STAGE',
         title: '',
         pauseDurationMillis: 0,
@@ -275,7 +281,7 @@ const INIT_TOTAL_STAGES = [
     {
         id: 'feature/test3',
         name: 'feature/test3',
-        state: 'NOT_EXECUTED', // 초기 상태
+        state: 'running', // 초기 상태
         type: 'STAGE',
         title: '',
         pauseDurationMillis: 0,
@@ -292,7 +298,7 @@ const INIT_TOTAL_STAGES = [
     {
         id: 'dev',
         name: 'dev',
-        state: 'NOT_EXECUTED', // 초기 상태
+        state: 'running', // 초기 상태
         type: 'STAGE',
         title: '',
         pauseDurationMillis: 0,
@@ -309,7 +315,7 @@ const INIT_TOTAL_STAGES = [
     {
         id: 'main',
         name: 'main',
-        state: 'NOT_EXECUTED', // 초기 상태
+        state: 'running', // 초기 상태
         type: 'STAGE',
         title: '',
         pauseDurationMillis: 0,
@@ -433,6 +439,21 @@ const INIT_PIPELINES = [
     } as JenkinsPipelineInfo,
 ]
 
+const INIT_CURRENT_TYPE = [
+    {
+        branch: 'feature',
+        status: 'running',
+    },
+    {
+        branch: 'dev',
+        status: 'ready',
+    },
+    {
+        branch: 'main',
+        status: 'ready',
+    },
+]
+
 const INIALIZER = {
     pipelineInfoItems: INIT_PIPELINES,
     headerTabs: INIT_HEADER_TAB,
@@ -440,6 +461,7 @@ const INIALIZER = {
     totalStages: INIT_TOTAL_STAGES,
     logs: INIT_LOG,
     totalLogs: INIT_TOTAL_LOGS,
+    currentTypes: INIT_CURRENT_TYPE,
 }
 
 export { INIALIZER }
