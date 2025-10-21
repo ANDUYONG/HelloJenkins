@@ -17,6 +17,7 @@ const data = reactive<ProcessDataProvider>({
     currentItem: null,
     items: [],
     isTotalProcess: false,
+    currentTypes: INIALIZER.currentTypes,
     currentType: {
         branch: 'feature',
         status: 'ready',
@@ -33,50 +34,80 @@ const propsSender = computed(() => {
         overview: {
             processItems: props.props.processItems,
             onResponse(res: JenkinsPipelineInfo) {
-                const IsNumber = (value: string | undefined): boolean => {
-                    if (value === undefined || value === null || value.trim() === '') {
-                        return false;
-                    }
-                    const num = Number(value);
-                    return !isNaN(num) && isFinite(num);
-                }
+                // console.log('data.items[idx].tree.data.stages', data.items[idx].tree.data.stages)
+                onResponseDivideForBranch(res)
+                
+                // Total Stages 구성하기
+                onResponseDivideForTotal(res)
+                    
+                // 2. branch 종료 후 실행 로직 : dev | main merge
+                const lstIdx = res.tree.data.stages.length - 1
+                if(res.tree.data.stages[lstIdx].name === 'Post Actions') {    
+                    if(res.branchName === 'dev' || res.branchName === 'main') {
+                        // 1. 상태 바꾸기
+                        data.currentTypes = data.currentTypes.map(x => {
+                            if(res.branchName.includes(x.branch)) {
+                                return {
+                                    ...x,
+                                    status: 'success',
+                                }
+                            }
+                            return x
+                        })
+                        if(res.branchName === 'main') return alert('main브랜치의 배포를 성공적으로 완료 했습니다.')
 
-                const { branchName, totalLog, buildNumber } = res
-                const idx = data.items.findIndex(x => x.branchName === branchName)
-                data.items[idx].buildNumber = buildNumber
-                data.items[idx].logs.push(res.logs[0])
-                data.items[idx].tree.data.stages = [ 
-                    _.cloneDeep(data.items[idx].tree.data.stages[0]),
-                    ..._.cloneDeep(reactive(res.tree.data.stages)), 
-                ]
-                data.items[idx].totalLog = decodeBase64(totalLog)
-
-                if(buildNumber !== -1 && IsNumber(data.currentItem.tree.currentLogTab)) {
-                    JenkinsAPI.getOverview(
-                        branchName, buildNumber, data.currentItem.tree.currentLogTab
-                    ).then(res => {
-                        const resData = res.data as string[]
-                        const currStageIdx = data.currentItem.logs.findIndex(x => x.id === data.currentItem.tree.currentLogTab)
-                        if(currStageIdx !== -1) {
-                            data.currentItem.logs[currStageIdx].log.data.text = resData.join('\r\n')
+                        // dev브랜치가 성공적으로 완료 되었을 때 main브랜치로 merge진행
+                        if(confirm('dev브랜치의 배포를 성공적으로 완료 했습니다.\r\ndev브랜치의 배포 자동화 작업을 진행하시겠습니까?')) {
+                            GitHubAPI.mergeBranches({ baseBranch: 'main', branchNames: ['dev'] })
+                                .then(() => {
+                                    alert('dev브랜치를 main브랜치로 성공적으로 병합했습니다.')
+                                })
+                                .catch(() => {
+                                    alert('브랜치 병합 중 오류가 발생했습니다.')
+                                })
                         }
-                    }).catch(e => {
-                        alert('오류가 발생했습니다.')
-                    })
-                }
+                    } else {
+                        const featureSteps = data
+                            .items[0]
+                            .tree
+                            .data
+                            .stages
+                            .filter(x => !['dev', 'main'].includes(x.name) && props.props.processItems.includes(x.id))
+                        if(featureSteps.map(x => x.state !== 'success').includes(true)) {
+                            // 1. 상태 바꾸기
+                            data.currentTypes = data.currentTypes.map(x => {
+                                if(res.branchName.split('/').includes(x.branch)) {
+                                    return {
+                                        ...x,
+                                        status: 'success',
+                                    }
+                                }
+                                return x
+                            })
+                            if(confirm('feature브랜치의 테스트를 성공적으로 완료 했습니다.\r\ndev브랜치의 배포 자동화 작업을 진행하시겠습니까?')) {
+                                GitHubAPI.mergeBranches({ baseBranch: 'dev', branchNames: props.props.processItems })
+                                    .then(() => {
+                                        alert('feature브랜치를 dev브랜치로 성공적으로 병합했습니다.')
+                                    })
+                                    .catch(() => {
+                                        alert('브랜치 병합 중 오류가 발생했습니다.')
+                                    })
+                            }
+                        }
+                    }
 
-                console.log('data.items[idx].tree.data.stages', data.items[idx].tree.data.stages)
+                }
             }
         },
         status: {
             currentType: data.currentType,
-            currentTypeItems: INIALIZER.currentTypes,
+            currentTypeItems: data.currentTypes,
             processItems: props.props.processItems,
             tabs: headerTabs,
             currentTab: computed(() => headerTabs.find(x => data.currentItem.branchName === x.branchName)).value,
-            tree: data.currentItem.tree, 
-            stages: data.currentItem.tree.data.stages,
-            isTotalProcess: data.isTotalProcess,
+            tree: computed(() => data.currentItem.tree).value, 
+            stages: computed(() => data.currentItem.tree.data.stages).value,
+            isTotalProcess: computed(() => data.isTotalProcess).value,
             onHeaderTabChange(tab: ProcessHeaderTab) {
                 console.log('onHeaderTabChange', tab)
                 const exist = data.items.find(x => x.branchName === tab.branchName)
@@ -144,8 +175,8 @@ function decodeBase64(base64String) {
 }
 
 function onInit() {
-    data.items = _.cloneDeep<JenkinsPipelineInfo[]>(pipelineInfoItems)
-    data.currentItem = _.cloneDeep<JenkinsPipelineInfo>(data.items[0])
+    data.items = _.cloneDeep<JenkinsPipelineInfo[]>(reactive(pipelineInfoItems))
+    data.currentItem = data.items[0]
 
     const defaultId = props.props.processItems[0]
     data.currentItem.tree.currentLogTab = defaultId
@@ -153,6 +184,56 @@ function onInit() {
     data.isTotalProcess = true
 
     console.log('props', props.props.processItems)
+}
+
+function onResponseDivideForBranch(res: JenkinsPipelineInfo) {
+    const IsNumber = (value: string | undefined): boolean => {
+        if (value === undefined || value === null || value.trim() === '') {
+            return false;
+        }
+        const num = Number(value);
+        return !isNaN(num) && isFinite(num);
+    }
+
+    const { branchName, totalLog, buildNumber } = res
+    const idx = data.items.findIndex(x => x.branchName === branchName)
+    data.items[idx].buildNumber = buildNumber
+    data.items[idx].logs.push(res.logs[0])
+    data.items[idx].tree.data.stages = [ 
+        _.cloneDeep(data.items[idx].tree.data.stages[0]),
+        ..._.cloneDeep(reactive(res.tree.data.stages)), 
+    ]
+    data.items[idx].totalLog = decodeBase64(totalLog)
+
+    if(buildNumber !== -1 && IsNumber(data.currentItem.tree.currentLogTab)) {
+        JenkinsAPI.getOverview(
+            branchName, buildNumber, data.currentItem.tree.currentLogTab
+        ).then(res => {
+            const resData = res.data as string[]
+            const currStageIdx = data.currentItem.logs.findIndex(x => x.id === data.currentItem.tree.currentLogTab)
+            if(currStageIdx !== -1) {
+                data.currentItem.logs[currStageIdx].log.data.text = resData.join('\r\n')
+            }
+        }).catch(e => {
+            alert('오류가 발생했습니다.')
+        })
+    }
+}
+
+function onResponseDivideForTotal(res: JenkinsPipelineInfo) {
+    const TotalItem = data.items.find(x => x.branchName === 'Total');
+    const TotalStages = TotalItem.tree.data.stages
+    const StagesIdx = TotalStages.findIndex(x => x.id === res.branchName);
+    const lstIdx = res.tree.data.stages.length - 1
+    if(StagesIdx !== -1) {
+        const changeStage = {
+            ...TotalStages[StagesIdx],
+            title: res.tree.data.stages[lstIdx].title,
+            state: res.tree.data.stages[lstIdx].name === 'Post Actions' ? 'success' : res.tree.data.stages[lstIdx].state,
+            totalDurationMillis: res.tree.data.stages.reduce((acc, x) => acc + (x.totalDurationMillis || 0), 0),
+        }
+        data.items[0].tree.data.stages[StagesIdx] = _.cloneDeep(reactive(changeStage))
+    }
 }
 
 onBeforeMount(onInit)

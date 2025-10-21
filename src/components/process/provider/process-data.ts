@@ -80,6 +80,7 @@ export interface ProcessDataProvider {
     items: JenkinsPipelineInfo[]
     isTotalProcess: boolean
     currentType: CurrentType
+    currentTypes: CurrentType[]
 }
 
 /**
@@ -439,7 +440,7 @@ const INIT_PIPELINES = [
     } as JenkinsPipelineInfo,
 ]
 
-const INIT_CURRENT_TYPE = [
+const INIT_CURRENT_TYPE: CurrentType[] = [
     {
         branch: 'feature',
         status: 'running',

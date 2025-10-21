@@ -6,6 +6,7 @@ export interface ProcessStatusTimeLineProps {
     items: PipelineStage[]
     isTotalProcess?: boolean
     processItems?: string[]
+    totalSecends
 }
 
 const props = defineProps<ProcessStatusTimeLineProps>()
@@ -13,8 +14,12 @@ const props = defineProps<ProcessStatusTimeLineProps>()
 /**
  * 상태에 따른 색상 정보 (Blue Ocean 스타일)를 반환합니다.
  */
-const getStatusStyles = (state: string) => {
-    switch (state.toLowerCase()) {
+const getStatusStyles = (state: string, stage?: PipelineStage) => {
+    const status = stage && stage.name === 'Post Actions' ? 'success' : state;
+    console.log('stage', stage);
+    console.log('status', status);
+
+    switch (status.toLowerCase()) {
         case 'success':
             return { color: '#4CAF50', icon: '✓', styleClass: 'status-success' }; // Green
         case 'running':
@@ -50,20 +55,6 @@ const formatDuration = (millis: number | undefined): string => {
     return result.join(' ');
 }
 
-const totalDuration = computed(() => {
-    const lastStage = props.items.slice(-1)[0];
-    if (lastStage && (lastStage.state.toLowerCase() === 'success' || lastStage.state.toLowerCase() === 'failure') && lastStage.totalDurationMillis) {
-        return formatDuration(lastStage.totalDurationMillis);
-    }
-    return '...'; 
-});
-
-const pipelineStatus = computed(() => {
-    const lastStage = props.items.slice(-1)[0];
-    return lastStage ? getStatusStyles(lastStage.state) : getStatusStyles('notready');
-});
-
-
 const items = computed(() => {
     const processItems = [
         ...props.processItems,
@@ -72,6 +63,15 @@ const items = computed(() => {
     ];
     const _processItems = props.items.filter(y => processItems.includes(y.name))
     return props.isTotalProcess ? _processItems : props.items.filter(x => x.id !== 'Info');
+});
+
+const totalDuration = computed(() => {
+    return formatDuration(items.value.reduce((acc, x) => acc + (x.totalDurationMillis || 0), 0));
+});
+
+const pipelineStatus = computed(() => {
+    const lastStage = props.items.slice(-1)[0];
+    return lastStage ? getStatusStyles(lastStage.state) : getStatusStyles('notready');
 });
 </script>
 <template>
@@ -99,29 +99,32 @@ const items = computed(() => {
                     </div>
                     
                     <div 
-                        v-if="index < props.items.length - 1" 
+                        v-if="index < items.length - 1" 
                         class="horizontal-line right-segment" 
                         :style="{ 'background-color': getStatusStyles(stage.state).color }">
                     </div>
 
                     <div class="stage-icon-wrapper-horizontal">
-                        <div class="stage-icon" :class="getStatusStyles(stage.state).styleClass">
-                            <template v-if="getStatusStyles(stage.state).styleClass === 'status-running'">
+                        <div class="stage-icon" :class="getStatusStyles(stage.state, stage).styleClass">
+                            <template v-if="getStatusStyles(stage.state, stage).styleClass === 'status-running'">
                                 <div class="spinner-border"></div>
                             </template>
                             <template v-else>
-                                <span class="status-symbol" :style="{ 'color': getStatusStyles(stage.state).color }">
-                                    {{ getStatusStyles(stage.state).icon }}
+                                <span class="status-symbol" :style="{ 'color': getStatusStyles(stage.state, stage).color }">
+                                    {{ getStatusStyles(stage.state, stage).icon }}
                                 </span>
                             </template>
                         </div>
                     </div>
                     
-                    <div class="stage-details-horizontal">
-                        <div class="stage-name" :style="{ 'color': getStatusStyles(stage.state).color }">
+                    <div class="stage-details-horizontal flex flex-col">
+                        <div class="stage-name basis-1/3" :style="{ 'color': getStatusStyles(stage.state, stage).color }">
                             {{ stage.name }}
                         </div>
-                        <div class="stage-duration">
+                        <div v-if="props.isTotalProcess" class="stage-title basis-1/3" :style="{ 'color': getStatusStyles(stage.state, stage).color }">
+                            {{ stage.title ? stage.title : 'Not Started' }}
+                        </div>
+                        <div class="stage-duration basis-1/3">
                             {{ formatDuration(stage.totalDurationMillis) || 'In Progress...' }}
                         </div>
                     </div>
@@ -249,6 +252,12 @@ const items = computed(() => {
 .stage-name {
     font-size: 1.0em; 
     font-weight: 600;
+    color: #444;
+}
+
+.stage-title {
+    font-size: 0.9em; 
+    font-weight: 500;
     color: #444;
 }
 
