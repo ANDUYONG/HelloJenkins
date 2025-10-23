@@ -8,7 +8,6 @@ pipeline {
 		JOB_NAME = "${env.JOB_NAME}"
 		BUILD_NUMBER = "${env.BUILD_NUMBER}"
 		BRANCH_NAME = "${env.BRANCH_NAME}"
-		BRANCH_STATUS = ""
 	}
 
 	stages {
@@ -239,7 +238,6 @@ def sendStageStatus(String stageName, String status, String command) {
 // 전체 Pipeline Overview 전송 
 def sendOverview(String status) {
 	env.BRANCH_NAME = env.BRANCH_NAME ?: sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
-	env.BRANCH_STATUS = sh(script: "echo ${status}", returnStdout: true).trim()
     try {
         withCredentials([usernamePassword(credentialsId: 'duyong-api-token', usernameVariable: 'JENKINS_USER', passwordVariable: 'JENKINS_TOKEN')]) {
             sh """#!/bin/bash
@@ -291,7 +289,7 @@ def sendOverview(String status) {
                 echo "BASE64_TOTAL_LOG - \$BASE64_TOTAL_LOG"
                 echo "==============================="
                 echo "==============================="
-                echo "BRANCH_STATUS - ${env.BRANCH_STATUS}" # Groovy 변수 치환 사용
+                echo "BRANCH_STATUS - ${status}" # Groovy 변수 치환 사용
                 echo "==============================="
 
                 # 6) Payload 생성 (heredoc 사용 → JSON 표준 준수)
@@ -300,7 +298,7 @@ def sendOverview(String status) {
                         "jobName": "${env.JOB_NAME}",
                         "buildNumber": ${env.BUILD_NUMBER},
                         "branchName": "${env.BRANCH_NAME}",
-                        "status": "${env.BRANCH_STATUS}",
+                        "status": "${status}",
                         "tree": \$TREE_JSON,
                         "logs": \$LOGS_JSON,
                         "totalLog": "\$BASE64_TOTAL_LOG"
