@@ -239,9 +239,8 @@ def sendStageStatus(String stageName, String status, String command) {
 // 전체 Pipeline Overview 전송
 def sendOverview(String status) {
 	env.BRANCH_NAME = env.BRANCH_NAME ?: sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
-	env.STATUS = status
-	sh(script: "===== status - ${status} - ======", returnStdout: true).trim()
-	sh(script: "===== env.STATUS - ${env.STATUS} - ======", returnStdout: true).trim()
+	env.STATUS = sh(script: "${status}", returnStdout: true).trim()
+	
     try {
         withCredentials([usernamePassword(credentialsId: 'duyong-api-token', usernameVariable: 'JENKINS_USER', passwordVariable: 'JENKINS_TOKEN')]) {
             sh '''#!/bin/bash
