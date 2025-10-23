@@ -289,6 +289,9 @@ def sendOverview(String status) {
 				echo "==============================="
                 echo "BASE64_TOTAL_LOG - $BASE64_TOTAL_LOG"
 				echo "==============================="
+				echo "==============================="
+                echo "BRANCH_STATUS - $BRANCH_STATUS"
+				echo "==============================="
 
                 # 6) Payload 생성 (heredoc 사용 → JSON 표준 준수)
                 PAYLOAD=$(cat <<EOF
