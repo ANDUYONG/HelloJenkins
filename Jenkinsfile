@@ -299,7 +299,9 @@ def sendOverview(String status) {
 				)
 
                 # 6) Payload 확인
+				echo "==============================="
                 echo "$PAYLOAD"
+				echo "==============================="
 
                 # 7) 외부 API 전송
                 curl -s -X POST "${SPRING_API}/overview" \
