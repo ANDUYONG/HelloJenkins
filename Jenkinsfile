@@ -8,6 +8,7 @@ pipeline {
 		JOB_NAME = "${env.JOB_NAME}"
 		BUILD_NUMBER = "${env.BUILD_NUMBER}"
 		BRANCH_NAME = "${env.BRANCH_NAME}"
+		STATUS = "${env.STATUS}"
 	}
 
 	stages {
@@ -238,13 +239,11 @@ def sendStageStatus(String stageName, String status, String command) {
 // 전체 Pipeline Overview 전송
 def sendOverview(String status) {
 	env.BRANCH_NAME = env.BRANCH_NAME ?: sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
+	env.STATUS = status
     try {
         withCredentials([usernamePassword(credentialsId: 'duyong-api-token', usernameVariable: 'JENKINS_USER', passwordVariable: 'JENKINS_TOKEN')]) {
             sh '''#!/bin/bash
                 set -euo pipefail
-
-				# 0) Jenkins Pipeline에서 전달된 status 값
-                status="${status:-UNKNOWN}"
 
                 # 1) CSRF Crumb 가져오기
                 CRUMB_JSON=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${JENKINS_URL}crumbIssuer/api/json" || true)
@@ -297,7 +296,7 @@ def sendOverview(String status) {
 						"jobName": "$JOB_NAME",
 						"buildNumber": $BUILD_NUMBER,
 						"branchName": "$BRANCH_NAME",
-						"status": "$status",
+						"status": "$STATUS",
 						"tree": $TREE_JSON,
 						"logs": $LOGS_JSON,
 						"totalLog": "$BASE64_TOTAL_LOG"
