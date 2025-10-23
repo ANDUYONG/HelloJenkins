@@ -1,3 +1,4 @@
+import { merge } from 'lodash'
 import http from './axios'
 
 const ROOT_PATH = '/api/github/'
@@ -18,6 +19,7 @@ const GitHubAPI = {
     commitContent: ({ list, branch }) => http.post(getApiPath('commitAndPush'), { list, branch }),
     branches: () => http.get(getApiPath('branches')),
     createBranch: (branch) => http.post(getApiPath('createBranch'), branch),
+    mergeBranches: ({ baseBranch, branchNames }) => http.post(getApiPath('mergeBranches'), { baseBranch, branchNames }),
 }
 
 function getApiPath(path) {

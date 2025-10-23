@@ -66,6 +66,7 @@ export interface PipelineTree {
 export interface JenkinsPipelineInfo {
     jobName: string
     branchName: string
+    status: string
     buildNumber: number
     tree: PipelineTree
     logs: LogItem[]
@@ -80,6 +81,8 @@ export interface ProcessDataProvider {
     items: JenkinsPipelineInfo[]
     isTotalProcess: boolean
     currentType: CurrentType
+    currentTypes: CurrentType[]
+    processItems: string[]
 }
 
 /**
@@ -375,7 +378,7 @@ const INIT_PIPELINES = [
             status: 'NOT_READY', // 초기 상태는 실행되지 않음으로 설정
             data: {
                 complete: false, // 아직 완료되지 않음
-                stages: [INIT_STAGE] // 스테이지 목록은 빈 배열
+                stages: [] // 스테이지 목록은 빈 배열
             }
         },
         logs: [INIT_LOG], // 로그 목록은 빈 배열
@@ -389,7 +392,7 @@ const INIT_PIPELINES = [
             status: 'NOT_READY', // 초기 상태는 실행되지 않음으로 설정
             data: {
                 complete: false, // 아직 완료되지 않음
-                stages: [INIT_STAGE] // 스테이지 목록은 빈 배열
+                stages: [] // 스테이지 목록은 빈 배열
             }
         },
         logs: [INIT_LOG], // 로그 목록은 빈 배열
@@ -403,7 +406,7 @@ const INIT_PIPELINES = [
             status: 'NOT_READY', // 초기 상태는 실행되지 않음으로 설정
             data: {
                 complete: false, // 아직 완료되지 않음
-                stages: [INIT_STAGE] // 스테이지 목록은 빈 배열
+                stages: [] // 스테이지 목록은 빈 배열
             }
         },
         logs: [INIT_LOG], // 로그 목록은 빈 배열
@@ -417,7 +420,7 @@ const INIT_PIPELINES = [
             status: 'NOT_READY', // 초기 상태는 실행되지 않음으로 설정
             data: {
                 complete: false, // 아직 완료되지 않음
-                stages: [INIT_STAGE] // 스테이지 목록은 빈 배열
+                stages: [] // 스테이지 목록은 빈 배열
             }
         },
         logs: [INIT_LOG], // 로그 목록은 빈 배열
@@ -431,7 +434,7 @@ const INIT_PIPELINES = [
             status: 'NOT_READY', // 초기 상태는 실행되지 않음으로 설정
             data: {
                 complete: false, // 아직 완료되지 않음
-                stages: [INIT_STAGE] // 스테이지 목록은 빈 배열
+                stages: [] // 스테이지 목록은 빈 배열
             }
         },
         logs: [INIT_LOG], // 로그 목록은 빈 배열
@@ -439,7 +442,7 @@ const INIT_PIPELINES = [
     } as JenkinsPipelineInfo,
 ]
 
-const INIT_CURRENT_TYPE = [
+const INIT_CURRENT_TYPE: CurrentType[] = [
     {
         branch: 'feature',
         status: 'running',

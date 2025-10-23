@@ -22,7 +22,15 @@ function connect() {
   ws.value.onmessage = (event) => {
     const data = JSON.parse(event.data)
     console.log('[OverviewSocket] received:', data);
-    emits('response', data)
+    emits('response', data);
+
+    // ✅ 상태가 실패(failure)일 경우 소켓 닫기
+    if (data.status === 'FAILURE') {
+      console.warn('[OverviewSocket] Build failed — closing socket');
+      ws.value?.close();
+      ws.value = null;
+      connected.value = false;
+    }
   };
 
   ws.value.onclose = () => {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, inject } from 'vue';
 
-const emits = defineEmits(['message']);
+const emits = defineEmits(['fail']);
 
 const ws = ref<WebSocket | null>(null);
 const connected = ref(false);
@@ -19,7 +19,10 @@ function connect() {
   ws.value.onmessage = (event) => {
     const data = JSON.parse(event.data)
     console.log('[ProcessSocket] received:', data);
-    emits('message', data);
+    if(data.status === 'FAILURE') {
+      console.error('Jenkins reported failure:', data.message);
+      emits('fail', data);
+    }
   };
 
   ws.value.onclose = () => {
@@ -59,3 +62,4 @@ function decodeBase64(base64String) {
   return new TextDecoder('utf-8').decode(bytes);
 }
 </script>
+<template></template>
