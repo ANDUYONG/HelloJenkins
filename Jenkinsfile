@@ -189,7 +189,7 @@ pipeline {
 						 -d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"COMPLETED","logs":"${encodedLogs}"}' || true
 					"""
 
-					sendOverview("COMPLETED")
+					sendOverview(env.BRANCH_STATUS)
 				} catch (e) {
 					echo "always block 에러: ${e}"
 				}
@@ -238,6 +238,7 @@ def sendStageStatus(String stageName, String status, String command) {
 // 전체 Pipeline Overview 전송 
 def sendOverview(String status) {
 	env.BRANCH_NAME = env.BRANCH_NAME ?: sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
+	env.BRANCH_STATUS = status
     try {
         withCredentials([usernamePassword(credentialsId: 'duyong-api-token', usernameVariable: 'JENKINS_USER', passwordVariable: 'JENKINS_TOKEN')]) {
             sh """#!/bin/bash
