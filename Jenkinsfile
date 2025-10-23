@@ -20,10 +20,10 @@ pipeline {
 					try {
 						checkout scm
 						sendStageStatus("Checkout", "SUCCESS", "Checkout completed.")
-						sendOverview()
+						sendOverview("SUCCESS")
 					} catch (e) {
 						sendStageStatus("Checkout", "FAILURE", e.toString())
-						sendOverview()
+						sendOverview("FAILURE")
 						error("Checkout filed")
 					}
 				}		
@@ -65,10 +65,10 @@ pipeline {
 							sendStageStatus("Merge", "SUCCESS", "No merge required.")
 						}
 
-						sendOverview()
+						sendOverview("SUCCESS")
 					} catch (e) {
 						sendStageStatus("Merge", "FAILURE", e.toString())
-						sendOverview()
+						sendOverview("FAILURE")
 						error("Merge failed")
 					}
 				}
@@ -83,10 +83,10 @@ pipeline {
 					try {
 						sh 'npm install' // 또는 mvn package
 						sendStageStatus("Build", "SUCCESS", "Successfully installed")
-						sendOverview()
+						sendOverview("SUCCESS")
 					} catch (e) {
 						sendStageStatus("Build", "FAILURE", e.toString())
-						sendOverview()
+						sendOverview("FAILURE")
 						error("Build failed")
 					}
 				}
@@ -101,7 +101,7 @@ pipeline {
 					try {
 						sh 'npm run build' // 또는 mvn package
 						sendStageStatus("Build", "SUCCESS", "Successfully builded.")
-						sendOverview()
+						sendOverview("SUCCESS")
 					} catch (e) {
 						sendStageStatus("Build", "FAILURE", e.toString())
 						sendOverview()
@@ -119,10 +119,10 @@ pipeline {
 					try {
 							sh 'npm run test' // 또는 mvn package
 							sendStageStatus("Test", "SUCCESS", "Test Completed.")
-							sendOverview()
+							sendOverview("SUCCESS")
 					} catch (e) {
 							sendStageStatus("Test", "FAILURE", e.toString())
-							sendOverview()
+							sendOverview("FAILURE")
 							error("Test failed")
 					}
 				}
@@ -146,10 +146,10 @@ pipeline {
 						sh 'rm -rf /Users/duyong/프로젝트/HelloJenkins/deploy/frontend/*'
 						sh 'cp -r dist/* /Users/duyong/프로젝트/HelloJenkins/deploy/frontend/'
 						sendStageStatus("Deploy", "SUCCESS", "Successfully Deployed!!")
-						sendOverview()
+						sendOverview("SUCCESS")
 					} catch (e) {
 						sendStageStatus("Deploy", "FAILURE", e.toString())
-						sendOverview()
+						sendOverview("FAILURE")
 						error("Build failed")
 					}
 				}
@@ -236,7 +236,7 @@ def sendStageStatus(String stageName, String status, String command) {
 
 // -------------------------------
 // 전체 Pipeline Overview 전송
-def sendOverview() {
+def sendOverview(String status) {
 	env.BRANCH_NAME = env.BRANCH_NAME ?: sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
     try {
         withCredentials([usernamePassword(credentialsId: 'duyong-api-token', usernameVariable: 'JENKINS_USER', passwordVariable: 'JENKINS_TOKEN')]) {
@@ -290,6 +290,7 @@ def sendOverview() {
 						"jobName": "$JOB_NAME",
 						"buildNumber": $BUILD_NUMBER,
 						"branchName": "$BRANCH_NAME",
+						"status": "$status",
 						"tree": $TREE_JSON,
 						"logs": $LOGS_JSON,
 						"totalLog": "$BASE64_TOTAL_LOG"
