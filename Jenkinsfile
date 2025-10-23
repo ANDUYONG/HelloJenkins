@@ -294,7 +294,7 @@ def sendOverview(String status) {
 						"jobName": "$JOB_NAME",
 						"buildNumber": $BUILD_NUMBER,
 						"branchName": "$BRANCH_NAME",
-						"status": "$status",
+						"status": "${status:-UNKNOWN}",
 						"tree": $TREE_JSON,
 						"logs": $LOGS_JSON,
 						"totalLog": "$BASE64_TOTAL_LOG"
