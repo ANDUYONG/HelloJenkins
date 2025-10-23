@@ -19,9 +19,6 @@ const props = defineProps<ProcessTotalStatusProps>()
  * Tailwind CSS 대신 일반 CSS 변수나 색상 코드를 사용하여 구현합니다.
  */
 const getStatusBackgroundColor = (status: string): string => {
-    console.log('--- total status ---');
-    console.log(status);
-    console.log('--------------------');
     switch (status.toLowerCase()) {
         case 'success':
             return '#4CAF50'; // 초록색

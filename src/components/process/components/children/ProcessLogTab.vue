@@ -23,9 +23,6 @@ const isShow = (name: string) => computed(() => {
     // 2. Total아니면서, NOT_READY가 아닌 경우
     const notTotal = !props.isTotalProcess
 
-    console.log('total', total)
-    console.log('notTotal', notTotal)
-
     return total || notTotal || name === 'Info'
 })
 

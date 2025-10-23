@@ -22,7 +22,6 @@ const props = inject<LeftArea>('leftArea')
         <ProcessDataProvider :props="props">
             <template #Socket="{ props: { onResponse } }">
                 <OverviewSocket @response="onResponse"/>
-                <ProcessSocket/>
              </template>
     
             <template #Header>

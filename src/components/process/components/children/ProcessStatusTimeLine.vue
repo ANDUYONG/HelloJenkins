@@ -16,9 +16,6 @@ const props = defineProps<ProcessStatusTimeLineProps>()
  */
 const getStatusStyles = (state: string, stage?: PipelineStage) => {
     const status = stage && stage.name === 'Post Actions' ? 'success' : state;
-    console.log('stage', stage);
-    console.log('status', status);
-
     switch (status.toLowerCase()) {
         case 'success':
             return { color: '#4CAF50', icon: '✓', styleClass: 'status-success' }; // Green
@@ -76,61 +73,71 @@ const pipelineStatus = computed(() => {
 </script>
 <template>
     <div class="pipeline-timeline-container">
-        <div class="timeline-header">
-            <h3 class="header-title">{{ props.isTotalProcess ? 'Total Branches Flow' : 'Pipeline Stages Flow' }}</h3>
-            <div class="header-summary">
-                <span class="summary-status-label" :style="{ 'color': pipelineStatus.color }">
-                    {{ pipelineStatus.styleClass.replace('status-', '').toUpperCase() }}
-                </span>
-                <span class="summary-duration">
-                    Total Duration: {{ totalDuration }}
-                </span>
-            </div>
-        </div>
-
-        <div class="timeline-body-horizontal">
-            <template v-for="(stage, index) in items" :key="stage.id">
-                <div class="timeline-stage-item-horizontal">
-                    
-                    <div 
-                        v-if="index > 0" 
-                        class="horizontal-line left-segment" 
-                        :style="{ 'background-color': getStatusStyles(props.items[index-1].state).color }">
-                    </div>
-                    
-                    <div 
-                        v-if="index < items.length - 1" 
-                        class="horizontal-line right-segment" 
-                        :style="{ 'background-color': getStatusStyles(stage.state).color }">
-                    </div>
-
-                    <div class="stage-icon-wrapper-horizontal">
-                        <div class="stage-icon" :class="getStatusStyles(stage.state, stage).styleClass">
-                            <template v-if="getStatusStyles(stage.state, stage).styleClass === 'status-running'">
-                                <div class="spinner-border"></div>
-                            </template>
-                            <template v-else>
-                                <span class="status-symbol" :style="{ 'color': getStatusStyles(stage.state, stage).color }">
-                                    {{ getStatusStyles(stage.state, stage).icon }}
-                                </span>
-                            </template>
-                        </div>
-                    </div>
-                    
-                    <div class="stage-details-horizontal flex flex-col">
-                        <div class="stage-name basis-1/3" :style="{ 'color': getStatusStyles(stage.state, stage).color }">
-                            {{ stage.name }}
-                        </div>
-                        <div v-if="props.isTotalProcess" class="stage-title basis-1/3" :style="{ 'color': getStatusStyles(stage.state, stage).color }">
-                            {{ stage.title ? stage.title : 'Not Started' }}
-                        </div>
-                        <div class="stage-duration basis-1/3">
-                            {{ formatDuration(stage.totalDurationMillis) || 'In Progress...' }}
-                        </div>
-                    </div>
+        <template v-if="props.items.length">
+            <div class="timeline-header">
+                <h3 class="header-title">{{ props.isTotalProcess ? 'Total Branches Flow' : 'Pipeline Stages Flow' }}</h3>
+                <div class="header-summary">
+                    <span class="summary-status-label" :style="{ 'color': pipelineStatus.color }">
+                        {{ pipelineStatus.styleClass.replace('status-', '').toUpperCase() }}
+                    </span>
+                    <span class="summary-duration">
+                        Total Duration: {{ totalDuration }}
+                    </span>
                 </div>
-            </template>
-        </div>
+            </div>
+    
+            <div class="timeline-body-horizontal">
+                <template v-for="(stage, index) in items" :key="stage.id">
+                    <div class="timeline-stage-item-horizontal">
+                        
+                        <div 
+                            v-if="index > 0" 
+                            class="horizontal-line left-segment" 
+                            :style="{ 'background-color': getStatusStyles(props.items[index-1].state).color }">
+                        </div>
+                        
+                        <div 
+                            v-if="index < items.length - 1" 
+                            class="horizontal-line right-segment" 
+                            :style="{ 'background-color': getStatusStyles(stage.state).color }">
+                        </div>
+    
+                        <div class="stage-icon-wrapper-horizontal">
+                            <div class="stage-icon" :class="getStatusStyles(stage.state, stage).styleClass">
+                                <template v-if="getStatusStyles(stage.state, stage).styleClass === 'status-running'">
+                                    <div class="spinner-border"></div>
+                                </template>
+                                <template v-else>
+                                    <span class="status-symbol" :style="{ 'color': getStatusStyles(stage.state, stage).color }">
+                                        {{ getStatusStyles(stage.state, stage).icon }}
+                                    </span>
+                                </template>
+                            </div>
+                        </div>
+                        
+                        <div class="stage-details-horizontal flex flex-col">
+                            <div class="stage-name basis-1/3" :style="{ 'color': getStatusStyles(stage.state, stage).color }">
+                                {{ stage.name }}
+                            </div>
+                            <div v-if="props.isTotalProcess" class="stage-title basis-1/3" :style="{ 'color': getStatusStyles(stage.state, stage).color }">
+                                {{ stage.title ? stage.title : 'Not Started' }}
+                            </div>
+                            <div class="stage-duration basis-1/3">
+                                {{ formatDuration(stage.totalDurationMillis) || 'In Progress...' }}
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+        <template v-else>
+            <div class="flex gap-[30px] text-[35px]">
+                <div class="socket-spinner"></div>
+                <div class="mt-[-5px]">
+                    WebSocket 통신 중 입니다...
+                </div>
+            </div>
+        </template>
     </div>
 </template>
 
@@ -265,5 +272,18 @@ const pipelineStatus = computed(() => {
     font-size: 0.8em; 
     color: #999;
     margin-top: 2px;
+}
+
+/* socket spinner 스타일 */
+.socket-spinner {
+  border: 4px solid rgba(0,0,0,0.1);
+  border-left-color: #4f46e5; /* 원하는 색상 */
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0px;
+  margin-top: 3px;
+  margin-left: 10px;
 }
 </style>

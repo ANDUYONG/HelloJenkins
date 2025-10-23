@@ -14,7 +14,6 @@ const logContainerRef = ref<HTMLElement | null>(null);
 
 const value = computed(() => {
     let text = ''
-    console.log('text', text)
     return props.value
 })
 
