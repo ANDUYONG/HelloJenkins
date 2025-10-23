@@ -242,81 +242,82 @@ def sendOverview(String status) {
 	env.BRANCH_STATUS = sh(script: "echo ${status}", returnStdout: true).trim()
     try {
         withCredentials([usernamePassword(credentialsId: 'duyong-api-token', usernameVariable: 'JENKINS_USER', passwordVariable: 'JENKINS_TOKEN')]) {
-            sh '''#!/bin/bash
+            sh """#!/bin/bash
                 set -euo pipefail
 
                 # 1) CSRF Crumb 가져오기
-                CRUMB_JSON=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${JENKINS_URL}crumbIssuer/api/json" || true)
-                CRUMB=$(echo "$CRUMB_JSON" | sed -n 's/.*"crumb"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' || true)
+                CRUMB_JSON=\$(curl -s -u "\$JENKINS_USER:\$JENKINS_TOKEN" "\${JENKINS_URL}crumbIssuer/api/json" || true)
+                CRUMB=\$(echo "\$CRUMB_JSON" | sed -n 's/.*"crumb"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' || true)
 
                 # 2) ROOT_NAME, FINAL_JOB_NAME 계산
-                ROOT_NAME=$(echo "$JOB_NAME" | cut -d'/' -f1)
-                FINAL_JOB_NAME=$(echo "$JOB_NAME" | sed "s@^$ROOT_NAME/@$ROOT_NAME/job/@")
-                BUILD="$BUILD_NUMBER"
+                ROOT_NAME=\$(echo "${env.JOB_NAME}" | cut -d'/' -f1)
+                FINAL_JOB_NAME=\$(echo "${env.JOB_NAME}" | sed "s@^\$ROOT_NAME/@\$ROOT_NAME/job/@")
+                BUILD="${env.BUILD_NUMBER}"
 
                 # 3) Pipeline Tree 가져오기
-                TREE_JSON=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" \
-                    "${JENKINS_URL}job/${FINAL_JOB_NAME}/${BUILD}/pipeline-overview/tree" || true)
+                TREE_JSON=\$(curl -s -u "\$JENKINS_USER:\$JENKINS_TOKEN" -H "Jenkins-Crumb:\$CRUMB" \
+                    "\${JENKINS_URL}job/\$FINAL_JOB_NAME/\$BUILD/pipeline-overview/tree" || true)
 
                 # 4) 각 Node 로그 가져오기
-                NODE_IDS=$(echo "$TREE_JSON" | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p')
+                NODE_IDS=\$(echo "\$TREE_JSON" | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p')
                 LOGS_JSON="["
                 FIRST=true
 
-                for NODE in $NODE_IDS; do
-                    NODE_LOG=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" \
-                        "${JENKINS_URL}job/${FINAL_JOB_NAME}/${BUILD}/pipeline-overview/consoleOutput?nodeId=$NODE" || true)
+                for NODE in \$NODE_IDS; do
+                    NODE_LOG=\$(curl -s -u "\$JENKINS_USER:\$JENKINS_TOKEN" -H "Jenkins-Crumb:\$CRUMB" \
+                        "\${JENKINS_URL}job/\$FINAL_JOB_NAME/\$BUILD/pipeline-overview/consoleOutput?nodeId=\$NODE" || true)
 
                     # 로그 안의 따옴표, 역슬래시, 줄바꿈 escape
-                    ESCAPED_LOG=$(printf '%s' "$NODE_LOG" | sed ':a;N;$!ba;s/\\/\\\\/g;s/"/\\"/g;s/$/\\n/g')
+                    ESCAPED_LOG=\$(printf '%s' "\$NODE_LOG" | sed ':a;N;\$!ba;s/\\\\/\\\\\\\\/g;s/"/\\\\"/g;s/\$/\\\\n/g')
 
-                    if [ "$FIRST" = true ]; then
-                        LOGS_JSON="$LOGS_JSON{\\"id\\": \\"$NODE\\", \\"log\\": "$ESCAPED_LOG"}"
+                    if [ "\$FIRST" = true ]; then
+                        LOGS_JSON="\$LOGS_JSON{\\\"id\\\": \\"\$NODE\\", \\"log\\": "\$ESCAPED_LOG"}"
                         FIRST=false
                     else
-                        LOGS_JSON="$LOGS_JSON, {\\"id\\": \\"$NODE\\", \\"log\\": "$ESCAPED_LOG"}"
+                        LOGS_JSON="\$LOGS_JSON, {\\"id\\": \\"\$NODE\\", \\"log\\": "\$ESCAPED_LOG"}"
                     fi
                 done
-                LOGS_JSON="$LOGS_JSON]"
+                LOGS_JSON="\$LOGS_JSON]"
 
                 # 5) 전체 빌드 로그 조회 및 Base64 인코딩
-                TOTAL_LOG_RAW=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" -H "Jenkins-Crumb:$CRUMB" \
-                    "${JENKINS_URL}job/${FINAL_JOB_NAME}/${BUILD}/logText/progressiveText")
+                TOTAL_LOG_RAW=\$(curl -s -u "\$JENKINS_USER:\$JENKINS_TOKEN" -H "Jenkins-Crumb:\$CRUMB" \
+                    "\${JENKINS_URL}job/\$FINAL_JOB_NAME/\$BUILD/logText/progressiveText")
 
                 # 5.1) Base64 인코딩: 줄바꿈 문자를 제거하지 않고 인코딩하여 안전하게 처리
-                BASE64_TOTAL_LOG=$(printf '%s' "$TOTAL_LOG_RAW" | base64)
+                # Mac/BSD base64와 GNU/Linux base64는 옵션이 다를 수 있으므로, pipe를 통해 처리
+                BASE64_TOTAL_LOG=\$(printf '%s' "\$TOTAL_LOG_RAW" | base64)
 
-				echo "==============================="
-                echo "BASE64_TOTAL_LOG - $BASE64_TOTAL_LOG"
-				echo "==============================="
-				echo "==============================="
-                echo "BRANCH_STATUS - $BRANCH_STATUS"
-				echo "==============================="
+                echo "==============================="
+                echo "BASE64_TOTAL_LOG - \$BASE64_TOTAL_LOG"
+                echo "==============================="
+                echo "==============================="
+                echo "BRANCH_STATUS - ${env.BRANCH_STATUS}" # Groovy 변수 치환 사용
+                echo "==============================="
 
                 # 6) Payload 생성 (heredoc 사용 → JSON 표준 준수)
-                PAYLOAD=$(cat <<EOF
-					{
-						"jobName": "$JOB_NAME",
-						"buildNumber": $BUILD_NUMBER,
-						"branchName": "$BRANCH_NAME",
-						"status": "$BRANCH_STATUS",
-						"tree": $TREE_JSON,
-						"logs": $LOGS_JSON,
-						"totalLog": "$BASE64_TOTAL_LOG"
-					}
-				EOF
-				)
+                PAYLOAD=\$(cat <<EOF
+                    {
+                        "jobName": "${env.JOB_NAME}",
+                        "buildNumber": ${env.BUILD_NUMBER},
+                        "branchName": "${env.BRANCH_NAME}",
+                        "status": "${env.BRANCH_STATUS}",
+                        "tree": \$TREE_JSON,
+                        "logs": \$LOGS_JSON,
+                        "totalLog": "\$BASE64_TOTAL_LOG"
+                    }
+                EOF
+                )
 
                 # 6) Payload 확인
-				echo "==============================="
-                echo "$PAYLOAD"
-				echo "==============================="
+                echo "==============================="
+                echo "\$PAYLOAD"
+                echo "==============================="
 
                 # 7) 외부 API 전송
-                curl -X POST "${SPRING_API}/overview" \
+                curl -X POST "${env.SPRING_API}/overview" \
                     -H "Content-Type: application/json" \
-                    -d "$PAYLOAD" || true
-            '''
+                    -d "\$PAYLOAD" || true
+            """
         }
     } catch (err) {
         echo "Overview send failed: ${err}"
