@@ -8,7 +8,7 @@ pipeline {
 		JOB_NAME = "${env.JOB_NAME}"
 		BUILD_NUMBER = "${env.BUILD_NUMBER}"
 		BRANCH_NAME = "${env.BRANCH_NAME}"
-		STATUS = "${env.STATUS}"
+		BRANCH_STATUS = ""
 	}
 
 	stages {
@@ -239,9 +239,9 @@ def sendStageStatus(String stageName, String status, String command) {
 // 전체 Pipeline Overview 전송
 def sendOverview(String status) {
 	env.BRANCH_NAME = env.BRANCH_NAME ?: sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
+	env.BRANCH_STATUS = status
     try {
         withCredentials([usernamePassword(credentialsId: 'duyong-api-token', usernameVariable: 'JENKINS_USER', passwordVariable: 'JENKINS_TOKEN')]) {
-			sh "STATUS='${status}' bash -c '''echo STATUS=$STATUS'''"
             sh '''#!/bin/bash
                 set -euo pipefail
 
@@ -296,7 +296,7 @@ def sendOverview(String status) {
 						"jobName": "$JOB_NAME",
 						"buildNumber": $BUILD_NUMBER,
 						"branchName": "$BRANCH_NAME",
-						"status": "$STATUS",
+						"status": "$BRANCH_STATUS",
 						"tree": $TREE_JSON,
 						"logs": $LOGS_JSON,
 						"totalLog": "$BASE64_TOTAL_LOG"
