@@ -243,6 +243,9 @@ def sendOverview(String status) {
             sh '''#!/bin/bash
                 set -euo pipefail
 
+				# 0) Jenkins Pipeline에서 전달된 status 값
+                status="${status:-UNKNOWN}"
+
                 # 1) CSRF Crumb 가져오기
                 CRUMB_JSON=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${JENKINS_URL}crumbIssuer/api/json" || true)
                 CRUMB=$(echo "$CRUMB_JSON" | sed -n 's/.*"crumb"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' || true)
@@ -294,7 +297,7 @@ def sendOverview(String status) {
 						"jobName": "$JOB_NAME",
 						"buildNumber": $BUILD_NUMBER,
 						"branchName": "$BRANCH_NAME",
-						"status": "${status:-UNKNOWN}",
+						"status": "$status",
 						"tree": $TREE_JSON,
 						"logs": $LOGS_JSON,
 						"totalLog": "$BASE64_TOTAL_LOG"
