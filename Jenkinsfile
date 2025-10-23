@@ -284,6 +284,10 @@ def sendOverview(String status) {
                 # 5.1) Base64 인코딩: 줄바꿈 문자를 제거하지 않고 인코딩하여 안전하게 처리
                 BASE64_TOTAL_LOG=$(printf '%s' "$TOTAL_LOG_RAW" | base64)
 
+				echo "==============================="
+                echo "$BASE64_TOTAL_LOG"
+				echo "==============================="
+
                 # 6) Payload 생성 (heredoc 사용 → JSON 표준 준수)
                 PAYLOAD=$(cat <<EOF
 					{
