@@ -189,7 +189,7 @@ pipeline {
 						 -d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"COMPLETED","logs":"${encodedLogs}"}' || true
 					"""
 
-					sendOverview()
+					sendOverview("COMPLETED")
 				} catch (e) {
 					echo "always block 에러: ${e}"
 				}
