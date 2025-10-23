@@ -236,7 +236,7 @@ def sendStageStatus(String stageName, String status, String command) {
 }
 
 // -------------------------------
-// 전체 Pipeline Overview 전송
+// 전체 Pipeline Overview 전송 
 def sendOverview(String status) {
 	env.BRANCH_NAME = env.BRANCH_NAME ?: sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
 	env.BRANCH_STATUS = sh(script: "echo ${status}", returnStdout: true).trim()
