@@ -239,15 +239,11 @@ def sendStageStatus(String stageName, String status, String command) {
 // 전체 Pipeline Overview 전송
 def sendOverview(String status) {
 	env.BRANCH_NAME = env.BRANCH_NAME ?: sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
-	env.STATUS = status
-	
     try {
         withCredentials([usernamePassword(credentialsId: 'duyong-api-token', usernameVariable: 'JENKINS_USER', passwordVariable: 'JENKINS_TOKEN')]) {
+			sh "STATUS='${status}' bash -c '''echo STATUS=$STATUS'''"
             sh '''#!/bin/bash
                 set -euo pipefail
-
-				# Groovy에서 env.STATUS 로 전달된 환경변수를 여기서 사용 가능
-                echo "STATUS from env = $STATUS"
 
                 # 1) CSRF Crumb 가져오기
                 CRUMB_JSON=$(curl -s -u "$JENKINS_USER:$JENKINS_TOKEN" "${JENKINS_URL}crumbIssuer/api/json" || true)
