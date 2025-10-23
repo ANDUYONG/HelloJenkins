@@ -66,24 +66,6 @@ const propsSender = computed(() => {
                         console.log('onResponse FAILURE currentTypes:', data.currentTypes)
                     }
                 }
-                const idx = data.items[0].tree.data.stages.findIndex(x => x.id === res.branchName)
-                console.log('onFail branchName:', res.branchName)
-                console.log('onFail idx:', idx)
-                // branch 상태 업데이트
-                if( idx !== -1 ) {
-                    data.items[0].tree.data.stages[idx].state = 'failure'
-                    data.currentTypes = data.currentTypes.map(x => {
-                        if(res.branchName.includes(x.branch)) {
-                            return {
-                                ...x,
-                                status: 'fail',
-                            }
-                        }
-                        return x
-                    })
-
-                    console.log('onFail currentTypes:', data.currentTypes)
-                }
             },
         },
         status: {
