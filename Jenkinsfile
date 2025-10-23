@@ -285,13 +285,6 @@ def sendOverview(String status) {
                 # Mac/BSD base64와 GNU/Linux base64는 옵션이 다를 수 있으므로, pipe를 통해 처리
                 BASE64_TOTAL_LOG=\$(printf '%s' "\$TOTAL_LOG_RAW" | base64)
 
-                echo "==============================="
-                echo "BASE64_TOTAL_LOG - \$BASE64_TOTAL_LOG"
-                echo "==============================="
-                echo "==============================="
-                echo "BRANCH_STATUS - ${status}" # Groovy 변수 치환 사용
-                echo "==============================="
-
                 # 6) Payload 생성 (heredoc 사용 → JSON 표준 준수)
                 PAYLOAD=\$(cat <<EOF
                     {
@@ -307,9 +300,9 @@ def sendOverview(String status) {
                 )
 
                 # 6) Payload 확인
-                echo "==============================="
-                echo "\$PAYLOAD"
-                echo "==============================="
+                # echo "==============================="
+                # echo "\$PAYLOAD"
+                # echo "==============================="
 
                 # 7) 외부 API 전송
                 curl -X POST "${env.SPRING_API}/overview" \
