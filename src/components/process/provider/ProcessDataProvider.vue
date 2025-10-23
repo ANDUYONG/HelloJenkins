@@ -65,6 +65,8 @@ const propsSender = computed(() => {
 
                         console.log('onResponse FAILURE currentTypes:', data.currentTypes)
                     }
+
+                    alert('빌드가 실패했습니다. 파일 수정부터 다시 시도해주세요.')
                 }
             },
         },
