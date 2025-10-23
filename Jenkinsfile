@@ -104,7 +104,7 @@ pipeline {
 						sendOverview("SUCCESS")
 					} catch (e) {
 						sendStageStatus("Build", "FAILURE", e.toString())
-						sendOverview()
+						sendOverview("FAILURE")
 						error("Build failed")
 					}
 				}
