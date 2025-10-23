@@ -285,7 +285,7 @@ def sendOverview(String status) {
                 BASE64_TOTAL_LOG=$(printf '%s' "$TOTAL_LOG_RAW" | base64)
 
 				echo "==============================="
-                echo "$BASE64_TOTAL_LOG"
+                echo "BASE64_TOTAL_LOG - $BASE64_TOTAL_LOG"
 				echo "==============================="
 
                 # 6) Payload 생성 (heredoc 사용 → JSON 표준 준수)
