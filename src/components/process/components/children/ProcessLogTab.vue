@@ -23,16 +23,13 @@ const isShow = (name: string) => computed(() => {
     // 2. Total아니면서, NOT_READY가 아닌 경우
     const notTotal = !props.isTotalProcess
 
-    console.log('total', total)
-    console.log('notTotal', notTotal)
-
     return total || notTotal || name === 'Info'
 })
 
 // Blue Ocean Inspired Status Colors and Icons - 요청에 따라 스피너/아이콘 정보 반환
 const getStatusInfo = (tab: PipelineStage) => {
-    const { state, id } = tab;
-    const checkVal = id === 'Info' ? id : state
+    const { state, id, name } = tab;
+    const checkVal = id === 'Info' ? id : name === 'Post Actions' ? 'success' : state
 
     switch (checkVal.toLowerCase()) {
         case 'success':
