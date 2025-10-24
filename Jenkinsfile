@@ -4,11 +4,7 @@ pipeline {
 	}
 
 	environment {
-		// DOCKER_CONFIG를 WORKSPACE 내의 임시 디렉토리로 설정하여
-		// macOS 키체인에 강제 연결되는 ~/.docker/config.json을 완전히 우회합니다.
-		DOCKER_CONFIG = "${WORKSPACE}/.docker_config_override" 
-		
-		// 로컬 변수 > 개발 당시의 변수 (주석 처리 유지)
+		// 로컬 변수 > 개발 당시의 변수
 		// NODE_HOME = '/Users/duyong/.nvm/versions/node/v20.19.5/bin/node'
 		// PATH = "${NODE_HOME}:${env.PATH}" 
 		SPRING_API = "http://localhost:8092/api/jenkins/event"
@@ -26,26 +22,13 @@ pipeline {
 	}
 
 	stages {
-        // -------------------------------
-        // DOCKER_CONFIG 경로에 비어있는 config.json을 생성하여
-        // Docker Desktop의 강제 덮어쓰기를 무력화합니다.
-        stage('Initialize Docker Config') {
-			steps {
-				script {
-					echo "Initializing isolated Docker config at ${env.DOCKER_CONFIG}"
-					sh "mkdir -p ${env.DOCKER_CONFIG}"
-					sh "echo '{}' > ${env.DOCKER_CONFIG}/config.json"
-					sendOverview("SUCCESS")
-				}
-			}
-		}
 
     	// ------------------------------- 
 		stage('Checkout') {
 			steps {
 				script {
 					try {
-						sh '''echo "Successfully Checkout ! "'''
+						sh '''echo "Successfully Checkout !'''
 
 						sendOverview("SUCCESS")
 					} catch(e) {
