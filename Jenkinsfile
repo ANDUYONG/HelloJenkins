@@ -1,5 +1,7 @@
 pipeline {
-	agent docker_enabled_agent
+	agent {
+		label 'docker_enabled_agent'
+	}
 
 	environment {
 		// 로컬 변수 > 개발 당시의 변수
