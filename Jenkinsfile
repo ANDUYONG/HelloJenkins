@@ -28,7 +28,7 @@ pipeline {
 			steps {
 				script {
 					try {
-						sh "echo Successfully Checkout !!"
+						sh '''echo "Successfully Checkout !"'''
 
 						sendOverview("SUCCESS")
 					} catch(e) {
