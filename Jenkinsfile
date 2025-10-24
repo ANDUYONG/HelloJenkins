@@ -36,7 +36,7 @@ pipeline {
 						sh cmd
 						sh chkOutCnd
 
-						sendOverview("SUCCESS")
+						// sendOverview("SUCCESS")
 					} catch(e) {
 						sendOverview("FAILURE")
 						error("Checkout failed: ${e}")
