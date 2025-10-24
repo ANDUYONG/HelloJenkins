@@ -28,7 +28,13 @@ pipeline {
 			steps {
 				script {
 					try {
-						sh '''echo "Successfully Checkout !'''
+						// Jenkins의 built-in checkout scm대신 Docker git 클라이언트 사용
+						def cmd = "docker run --rm -v \$(pwd):/git ${GIT_TOOL_IMAGE} clone ${GIT_BASE_URL} ."
+						// 특정 브랜치 체크아웃
+						def chkOutCnd = "docker run --rm -v \$(pwd):/git -w /git ${GIT_TOOL_IMAGE} checkout ${BRANCH_NAME}"
+
+						sh cmd
+						sh chkOutCnd
 
 						sendOverview("SUCCESS")
 					} catch(e) {
