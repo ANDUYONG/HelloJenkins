@@ -1,6 +1,6 @@
 pipeline {
 	agent {
-		label 'docker_enabled_agent'
+		label 'hellojenkins-agent'
 	}
 
 	environment {
