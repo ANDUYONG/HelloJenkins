@@ -6,7 +6,7 @@ pipeline {
 	environment {
 		// 로컬 변수 > 개발 당시의 변수
 		// NODE_HOME = '/Users/duyong/.nvm/versions/node/v20.19.5/bin/node'
-		// PATH = "${NODE_HOME}:${env.PATH}"
+		// PATH = "${NODE_HOME}:${env.PATH}" 
 		SPRING_API = "http://localhost:8092/api/jenkins/event"
 		JOB_NAME = "${env.JOB_NAME}"
 		BUILD_NUMBER = "${env.BUILD_NUMBER}"
