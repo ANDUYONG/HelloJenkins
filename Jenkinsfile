@@ -176,8 +176,8 @@ pipeline {
 				}
 			}
 			steps {
-				def cmd = "docker compose -f docker-compose.yml up -d --force-recreate"
 				script {
+					def cmd = "docker compose -f docker-compose.yml up -d --force-recreate"
 					try {
 						sh cmd
 						sendOverview("SUCCESS")
