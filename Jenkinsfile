@@ -35,7 +35,7 @@ pipeline {
 
 						// sh cmd
 						// sh chkOutCnd
-						checkout scm
+						// checkout scm
 
 						// sendOverview("SUCCESS")
 					} catch(e) {
