@@ -69,7 +69,7 @@ pipeline {
 
 						// git 명령어를 Docker 컨테이너 내에서 실행
 						if (mergeTarget) {
-							def fetchCmd = "docker run --rm -v \$(pwd):/git -w /git ${GIT_TOOL_IMAGE} git fetch origin ${mergeTarget}"
+							def fetchCmd = "docker run --rm -v \$(pwd):/git -w /git ${GIT_TOOL_IMAGE} fetch origin ${mergeTarget}"
 							def mergeCmd = "docker run --rm -v \$(pwd):/git -w /git ${GIT_TOOL_IMAGE} git merge origin/${mergeTarget} --no-commit --no-ff || true"
 							sh """
 							${fetchCmd}
