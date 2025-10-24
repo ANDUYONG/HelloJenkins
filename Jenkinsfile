@@ -27,7 +27,7 @@ pipeline {
 
 	stages {
         // -------------------------------
-        // DOCKER_CONFIG 경로에 비어있는 config.json을 생성하여
+        // DOCKER_CONFIG 경로에 비어있는 config.json을 생성하여 
         // Docker Desktop의 강제 덮어쓰기를 무력화합니다.
         stage('Initialize Docker Config') {
 			steps {
