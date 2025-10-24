@@ -176,7 +176,7 @@ pipeline {
 				}
 			}
 			steps {
-				def cmd = "docker -f docker-compose.yml up -d --force-recreate"
+				def cmd = "docker compose -f docker-compose.yml up -d --force-recreate"
 				script {
 					try {
 						sh cmd
