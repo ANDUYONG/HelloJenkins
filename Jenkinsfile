@@ -19,6 +19,10 @@ pipeline {
 		DOCKER_IMAGE_NAME = "hellojenkins-web"
 		NODE_BUILD_NAME = "node:20.19.5-alpine"
 		GIT_TOOL_IMAGE = "alpine/git"
+
+		// 배포 포트 변수 및 서비스 이름 변수
+        DEPLOY_PORT = ""
+        SERVICE_NAME = ""
 	}
 
 	stages {
@@ -99,15 +103,10 @@ pipeline {
 		}
 
     	// -------------------------------
-		stage('Build') {
-			when {
-				anyOf {
-					expression { env.BRANCH_NAME.startsWith("feature/") }
-				}
-			}
+		stage('Test') {
 			steps {
 				script {
-					def cmd = "docker run --rm -v \$(pwd):/app -w /app ${NODE_BUILD_NAME} npm run build"
+					def cmd = "docker run --rm -v \$(pwd):/app -w /app ${NODE_BUILD_NAME} npm run test"
 					try {
 						sh cmd
 						sendOverview("SUCCESS")
@@ -119,11 +118,11 @@ pipeline {
 			}
 		}
 
-    	// -------------------------------
-		stage('Test') {
+		// -------------------------------
+		stage('Build') {
 			steps {
 				script {
-					def cmd = "docker run --rm -v \$(pwd):/app -w /app ${NODE_BUILD_NAME} npm run test"
+					def cmd = "docker run --rm -v \$(pwd):/app -w /app ${NODE_BUILD_NAME} npm run build"
 					try {
 						sh cmd
 						sendOverview("SUCCESS")
@@ -145,7 +144,15 @@ pipeline {
 			}
 			steps {
 				script {
-					def targetImageName = "${DOCKER_IMAGE_NAME}-${BRANCH_NAME}"
+					// 배포 포트 및 서비스 이름 결정 
+					env.SERVICE_NAME = "${DOCKER_IMAGE_NAME}-${BRANCH_NAME}"
+					
+					if (env.BRANCH_NAME == "dev") {
+						env.DEPLOY_PORT = "8081"
+					} else if (env.BRANCH_NAME == "main") {
+						env.DEPLOY_PORT = "80"
+					} 
+					// 배포 포트 및 서비스 이름 결정
 
 					// 1. Groovy를 사용하여 docker-compose.yml 파일 내용을 읽기
                     def composeContent = readFile('docker-compose.yml')
@@ -156,8 +163,8 @@ pipeline {
                     // 3. 수정된 내용을 다시 파일에 씁니다.
                     writeFile(file: 'docker-compose.yml', text: modifiedContent)
 
-					def cmd = "docker build -t ${targetImageName}:${BUILD_NUMBER} -f Dockerfile ."
-					def aliasCmd = "docker tag ${targetImageName}:${BUILD_NUMBER} ${targetImageName}:latest"
+					def cmd = "docker build -t ${env.SERVICE_NAME}:${BUILD_NUMBER} -f Dockerfile ."
+					def aliasCmd = "docker tag ${env.SERVICE_NAME}:${BUILD_NUMBER} ${env.SERVICE_NAME}:latest"
 					try {
 						sh cmd
 						sh aliasCmd
@@ -180,7 +187,12 @@ pipeline {
 			}
 			steps {
 				script {
-					def cmd = "docker compose -f docker-compose.yml up -d --force-recreate"
+					// 1. 기존 컨테이너를 중지하고 제거 (포트 충돌 방지 및 새 이미지로 교체)
+					sh "docker compose -f docker-compose.yml stop ${env.SERVICE_NAME} || true"
+					sh "docker compose -f docker-compose.yml rm -f ${env.SERVICE_NAME} || true"
+
+					// 2. 새로운 컨테이너를 해당 서비스 이름으로만 up 시킵니다.
+					def cmd = "docker compose -f docker-compose.yml up -d --force-recreate ${env.SERVICE_NAME}"
 					try {
 						sh cmd
 						sendOverview("SUCCESS")
