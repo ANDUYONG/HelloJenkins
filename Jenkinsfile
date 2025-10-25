@@ -21,8 +21,7 @@ pipeline {
 		GIT_TOOL_IMAGE = "alpine/git"
 
 		// 배포 포트 변수 및 서비스 이름 변수
-        DEPLOY_PORT = ""
-        SERVICE_NAME = ""
+        SERVICE_NAME = "${DOCKER_IMAGE_NAME}-${BRANCH_NAME}"
 	}
 
 	stages {
@@ -140,27 +139,38 @@ pipeline {
 				anyOf {
 					expression { env.BRANCH_NAME == "dev" }
 					expression { env.BRANCH_NAME == "main" }
+					expression { env.BRANCH_NAME == "local" }
 				}
 			}
 			steps {
 				script {
 					// 배포 포트 및 서비스 이름 결정 
-					env.SERVICE_NAME = "${DOCKER_IMAGE_NAME}-${BRANCH_NAME}"
+					def port = ""
 					
 					if (env.BRANCH_NAME == "dev") {
-						env.DEPLOY_PORT = "8081"
+						port = "8081"
 					} else if (env.BRANCH_NAME == "main") {
-						env.DEPLOY_PORT = "80"
-					} 
-					// 배포 포트 및 서비스 이름 결정
+						port = "80"
+					} else if (env.BRANCH_NAME == "local") {
+						port = "8082"
+					}
 
-					// 1. Groovy를 사용하여 docker-compose.yml 파일 내용을 읽기
-                    def composeContent = readFile('docker-compose.yml')
+					echo "서비스 이름: ${env.SERVICE_NAME}"
+					echo "서비스 포트: ${port}"
 
-                    // 2. Groovy의 replaceAll 함수를 사용
-                    def modifiedContent = composeContent.replaceAll('IMAGE_NAME_PLACEHOLDER', "${DOCKER_IMAGE_NAME}-${BRANCH_NAME}:latest")
+					def composeContent = readFile('docker-compose.yml') // 값을 할당
 
-                    // 3. 수정된 내용을 다시 파일에 씁니다.
+					// 1. Groovy의 replaceAll 함수를 사용
+                    // 1.1. 서비스 이름/컨테이너 이름 대체 (필수)
+                    def modifiedContent = composeContent.replaceAll('SERVICE_NAME_PLACEHOLDER', env.SERVICE_NAME)
+                    
+                    // 1.2. 이미지 태그 대체
+                    modifiedContent = modifiedContent.replaceAll('IMAGE_NAME_PLACEHOLDER', "${env.SERVICE_NAME}:latest")
+                    
+                    // 1.3. 호스트 포트 대체
+                    modifiedContent = modifiedContent.replaceAll('HOST_PORT_PLACEHOLDER', port)
+                    
+                    // 2. 수정된 내용을 다시 파일에 작성
                     writeFile(file: 'docker-compose.yml', text: modifiedContent)
 
 					def cmd = "docker build -t ${env.SERVICE_NAME}:${BUILD_NUMBER} -f Dockerfile ."
@@ -183,6 +193,7 @@ pipeline {
 				anyOf {
 					expression { env.BRANCH_NAME == "dev" }
 					expression { env.BRANCH_NAME == "main" }
+					expression { env.BRANCH_NAME == "local" }
 				}
 			}
 			steps {
