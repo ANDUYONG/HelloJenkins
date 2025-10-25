@@ -146,9 +146,9 @@ pipeline {
 			steps {
 				script {
 					// 배포 포트 및 서비스 이름 결정 
-					env.SERVICE_NAME = "${DOCKER_IMAGE_NAME}-${BRANCH_NAME}"
+					def serviceName = "${DOCKER_IMAGE_NAME}-${BRANCH_NAME}"
 
-					echo "서비스 이름: ${env.SERVICE_NAME}"
+					echo "서비스 이름: ${serviceName}"
 					
 					if (env.BRANCH_NAME == "dev" || env.BRANCH_NAME == "local") {
 						env.DEPLOY_PORT = "8081"
@@ -160,10 +160,10 @@ pipeline {
 
 					// 1. Groovy의 replaceAll 함수를 사용
                     // 1.1. 서비스 이름/컨테이너 이름 대체 (필수)
-                    def modifiedContent = composeContent.replaceAll('SERVICE_NAME_PLACEHOLDER', env.SERVICE_NAME)
+                    def modifiedContent = composeContent.replaceAll('SERVICE_NAME_PLACEHOLDER', serviceName)
                     
                     // 1.2. 이미지 태그 대체
-                    modifiedContent = modifiedContent.replaceAll('IMAGE_NAME_PLACEHOLDER', "${env.SERVICE_NAME}:latest")
+                    modifiedContent = modifiedContent.replaceAll('IMAGE_NAME_PLACEHOLDER', "${serviceName}:latest")
                     
                     // 1.3. 호스트 포트 대체
                     modifiedContent = modifiedContent.replaceAll('HOST_PORT_PLACEHOLDER', env.DEPLOY_PORT)
@@ -171,8 +171,10 @@ pipeline {
                     // 2. 수정된 내용을 다시 파일에 작성
                     writeFile(file: 'docker-compose.yml', text: modifiedContent)
 
-					def cmd = "docker build -t ${env.SERVICE_NAME}:${BUILD_NUMBER} -f Dockerfile ."
-					def aliasCmd = "docker tag ${env.SERVICE_NAME}:${BUILD_NUMBER} ${env.SERVICE_NAME}:latest"
+					def cmd = "docker build -t ${serviceName}:${BUILD_NUMBER} -f Dockerfile ."
+					def aliasCmd = "docker tag ${serviceName}:${BUILD_NUMBER} ${serviceName}:latest"
+
+					env.SERVICE_NAME = serviceName
 					try {
 						sh cmd
 						sh aliasCmd
