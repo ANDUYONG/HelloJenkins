@@ -1,19 +1,17 @@
 version: '3.8'
 
+# 서비스 이름 (예: hellojenkins-web-dev 또는 hellojenkins-web-main)
 services:
-  # 서비스 이름 정의 (docker compose가 관리할 이름)
-  web:
-    # Jenkinsfile의 DOCKER_IMAGE_NAME과 동일해야 합니다. (hellojenkins-web)
-    # latest 태그는 Image Create Stage에서 자동으로 붙여집니다.
-    # 이 부분을 나중에 Jenkins에서 치환(Replace)할 수 있도록 고정된 템플릿 변수로 설정
-    image: IMAGE_NAME_PLACEHOLDER 
+  SERVICE_NAME_PLACEHOLDER:
+    # 이미지 이름 (예: hellojenkins-web-dev:latest)
+    image: IMAGE_NAME_PLACEHOLDER
     
-    # 컨테이너 이름 (선택 사항)
-    container_name: hellojenkins_web_container
-    
-    # 포트 매핑: 호스트 OS의 80번 포트를 컨테이너의 80번 포트에 연결
+    # 컨테이너 이름 (서비스 이름과 동일하게 설정)
+    container_name: SERVICE_NAME_PLACEHOLDER
+
+    # ports: 호스트 포트:컨테이너 포트
+    # 호스트 포트는 Jenkinsfile에서 DEPLOY_PORT 변수로 대체됩니다.
     ports:
-      - "80:80"
+      - "HOST_PORT_PLACEHOLDER:80"
     
-    # 컨테이너가 실패하면 항상 재시작
     restart: always
