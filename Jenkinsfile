@@ -140,12 +140,14 @@ pipeline {
 				anyOf {
 					expression { env.BRANCH_NAME == "dev" }
 					expression { env.BRANCH_NAME == "main" }
+					expression { env.BRANCH_NAME == "local" }
 				}
 			}
 			steps {
 				script {
 					// 배포 포트 및 서비스 이름 결정 
 					env.SERVICE_NAME = "${DOCKER_IMAGE_NAME}-${BRANCH_NAME}"
+					def tagName = env.SERVICE_NAME
 					
 					if (env.BRANCH_NAME == "dev") {
 						env.DEPLOY_PORT = "8081"
@@ -163,8 +165,8 @@ pipeline {
                     // 3. 수정된 내용을 다시 파일에 씁니다.
                     writeFile(file: 'docker-compose.yml', text: modifiedContent)
 
-					def cmd = "docker build -t ${env.SERVICE_NAME}:${BUILD_NUMBER} -f Dockerfile ."
-					def aliasCmd = "docker tag ${env.SERVICE_NAME}:${BUILD_NUMBER} ${env.SERVICE_NAME}:latest"
+					def cmd = "docker build -t ${tagName}:${BUILD_NUMBER} -f Dockerfile ."
+					def aliasCmd = "docker tag ${tagName}:${BUILD_NUMBER} ${tagName}:latest"
 					try {
 						sh cmd
 						sh aliasCmd
@@ -183,6 +185,7 @@ pipeline {
 				anyOf {
 					expression { env.BRANCH_NAME == "dev" }
 					expression { env.BRANCH_NAME == "main" }
+					expression { env.BRANCH_NAME == "local" }
 				}
 			}
 			steps {
