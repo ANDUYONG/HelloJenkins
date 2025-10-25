@@ -3,18 +3,6 @@
 # ----------------------------------------
 FROM node:20.19.5-alpine AS build
 
-# 작업 디렉토리 설정
-WORKDIR /app
-
-# 의존성 설치
-COPY package.json package-lock.json ./
-RUN npm install
-
-# 소스 코드 복사 및 빌드
-COPY . .
-# Vue.js 프로젝트라고 가정하고 빌드 명령 사용
-RUN npm run build 
-
 # ----------------------------------------
 # 2단계: 최종 (Production Stage) - Nginx 환경에서 정적 파일 서빙
 # ----------------------------------------
