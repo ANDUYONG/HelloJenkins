@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, nextTick } from 'vue'
 import type { LogItem } from '../../provider/process-data';
 
 export interface ProcessLogTabProps {
@@ -9,7 +9,8 @@ export interface ProcessLogTabProps {
 
 const props = defineProps<ProcessLogTabProps>()
 
-const value = ref(props.item)
+// 1. 스크롤 컨테이너에 접근하기 위한 템플릿 참조를 선언합니다.
+const logWrapperRef = ref<HTMLElement | null>(null);
 
 function decodeData(val: string) {
   // 1. URL-Safe 문자 치환: '-'를 '+'로, '_'를 '/'로 변환
@@ -43,12 +44,21 @@ function decodeData(val: string) {
   }
 }
 
-watch(() => value, newVal => {
-  console.log('newVal', newVal)
-})
+// 스크롤을 맨 아래로 내리는 함수
+function scrollToBottom() {
+  const element = logWrapperRef.value;
+  if (element) {
+    element.scrollTop = element.scrollHeight;
+  }
+}
+
+watch(() => props.item, (newVal) => {
+  nextTick(scrollToBottom);
+}, { deep: true, immediate: true })
 </script>
 <template>
-    <div class="log-content-wrapper">
+    <!-- 1. 템플릿 참조(ref)를 log-content-wrapper에 연결합니다. -->
+    <div class="log-content-wrapper" ref="logWrapperRef">
         <h1 class="log-title">
             {{ props.title }}
         </h1>
