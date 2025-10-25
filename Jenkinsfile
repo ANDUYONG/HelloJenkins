@@ -147,6 +147,8 @@ pipeline {
 				script {
 					// 배포 포트 및 서비스 이름 결정 
 					env.SERVICE_NAME = "${DOCKER_IMAGE_NAME}-${BRANCH_NAME}"
+
+					echo "서비스 이름: ${env.SERVICE_NAME}"
 					
 					if (env.BRANCH_NAME == "dev" || env.BRANCH_NAME == "local") {
 						env.DEPLOY_PORT = "8081"
