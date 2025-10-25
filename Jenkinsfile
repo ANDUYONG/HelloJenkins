@@ -99,22 +99,6 @@ pipeline {
 		}
 
     	// -------------------------------
-		stage('Build') {
-			steps {
-				script {
-					def cmd = "docker run --rm -v \$(pwd):/app -w /app ${NODE_BUILD_NAME} npm run build"
-					try {
-						sh cmd
-						sendOverview("SUCCESS")
-					} catch (e) {
-						sendOverview("FAILURE")
-						error("Build failed")
-					}
-				}
-			}
-		}
-
-    	// -------------------------------
 		stage('Test') {
 			steps {
 				script {
