@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  # 서비스 이름 정의 (docker compose가 관리할 이름)
+  web:
+    # Jenkinsfile의 DOCKER_IMAGE_NAME과 동일해야 합니다. (hellojenkins-web)
+    # latest 태그는 Image Create Stage에서 자동으로 붙여집니다.
+    # 이 부분을 나중에 Jenkins에서 치환(Replace)할 수 있도록 고정된 템플릿 변수로 설정
+    image: IMAGE_NAME_PLACEHOLDER 
+    
+    # 컨테이너 이름 (선택 사항)
+    container_name: hellojenkins_web_container
+    
+    # 포트 매핑: 호스트 OS의 80번 포트를 컨테이너의 80번 포트에 연결
+    ports:
+      - "80:80"
+    
+    # 컨테이너가 실패하면 항상 재시작
+    restart: always
