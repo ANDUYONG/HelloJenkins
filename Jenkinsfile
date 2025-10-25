@@ -203,12 +203,14 @@ pipeline {
 			}
 			steps {
 				script {
+					def serviceName = "${env.DOCKER_IMAGE_NAME}-${env.BRANCH_NAME}"
+
 					// 1. 기존 컨테이너를 중지하고 제거 (포트 충돌 방지 및 새 이미지로 교체)
-					sh "docker compose -f docker-compose.yml stop ${env.SERVICE_NAME} || true"
-					sh "docker compose -f docker-compose.yml rm -f ${env.SERVICE_NAME} || true"
+					sh "docker compose -f docker-compose.yml stop ${serviceName} || true"
+					sh "docker compose -f docker-compose.yml rm -f ${serviceName} || true"
 
 					// 2. 새로운 컨테이너를 해당 서비스 이름으로만 up 시킵니다.
-					def cmd = "docker compose -f docker-compose.yml up -d --force-recreate ${env.SERVICE_NAME}"
+					def cmd = "docker compose -f docker-compose.yml up -d --force-recreate ${serviceName}"
 					try {
 						sh cmd
 						sendOverview("SUCCESS")
