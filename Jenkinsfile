@@ -1,13 +1,24 @@
 pipeline {
-	agent any
+	agent {
+		label 'hellojenkins-agent'
+	}
 
 	environment {
-		NODE_HOME = '/Users/duyong/.nvm/versions/node/v20.19.5/bin/node'
-		PATH = "${NODE_HOME}:${env.PATH}"
-		SPRING_API = "http://61.81.49.136:8091/api/jenkins/event"
+		// 로컬 변수 > 개발 당시의 변수
+		// NODE_HOME = '/Users/duyong/.nvm/versions/node/v20.19.5/bin/node'
+		// PATH = "${NODE_HOME}:${env.PATH}" 
+		SPRING_API = "http://localhost:8092/api/jenkins/event"
 		JOB_NAME = "${env.JOB_NAME}"
 		BUILD_NUMBER = "${env.BUILD_NUMBER}"
 		BRANCH_NAME = "${env.BRANCH_NAME}"
+
+		// git url
+		GIT_BASE_URL = "https://github.com/ANDUYONG/HelloJenkins/"
+
+		// Docker 이미지 정의
+		DOCKER_IMAGE_NAME = "hellojenkins-web"
+		NODE_BUILD_NAME = "node:20.19.5-alpine"
+		GIT_TOOL_IMAGE = "alpine/git"
 	}
 
 	stages {
@@ -16,15 +27,11 @@ pipeline {
 		stage('Checkout') {
 			steps {
 				script {
-					sendStageStatus("Checkout", "RUNNING", "Checkout test...")
 					try {
-						checkout scm
-						sendStageStatus("Checkout", "SUCCESS", "Checkout completed.")
 						sendOverview("SUCCESS")
-					} catch (e) {
-						sendStageStatus("Checkout", "FAILURE", e.toString())
+					} catch(e) {
 						sendOverview("FAILURE")
-						error("Checkout filed")
+						error("Checkout failed: ${e}")
 					}
 				}		
 			}
@@ -41,10 +48,7 @@ pipeline {
 			}
 			steps {
 				script {
-					sendStageStatus("Merge", "RUNNING", "Merging with target branch...")
-
 					try {
-						// 병합 대상 결정
 						def mergeTarget = ""
 						if (env.BRANCH_NAME.startsWith("feature/")) {
 							mergeTarget = "dev"
@@ -54,22 +58,20 @@ pipeline {
 							mergeTarget = "dev"
 						}
 
-						// mergeTarget이 있을 경우만 수행
+						// git 명령어를 Docker 컨테이너 내에서 실행
 						if (mergeTarget) {
+							def fetchCmd = "docker run --rm -v \$(pwd):/git -w /git ${GIT_TOOL_IMAGE} fetch origin ${mergeTarget}"
+							def mergeCmd = "docker run --rm -v \$(pwd):/git -w /git ${GIT_TOOL_IMAGE} merge origin/${mergeTarget} --no-commit --no-ff || true"
 							sh """
-							git fetch origin ${mergeTarget}
-							git merge origin/${mergeTarget} --no-commit --no-ff || true
+							${fetchCmd}
+							${mergeCmd}
 							"""
-							sendStageStatus("Merge", "SUCCESS", "Merged with ${mergeTarget}.")
-						} else {
-							sendStageStatus("Merge", "SUCCESS", "No merge required.")
 						}
 
 						sendOverview("SUCCESS")
-					} catch (e) {
-						sendStageStatus("Merge", "FAILURE", e.toString())
+					} catch(e) {
 						sendOverview("FAILURE")
-						error("Merge failed")
+						error("Merge failed: ${e}")
 					}
 				}
 			}
@@ -77,15 +79,18 @@ pipeline {
 
     	// -------------------------------
 		stage('Install') {
+			when {
+				anyOf {
+					expression { env.BRANCH_NAME != null }
+				}
+			}
 			steps {
 				script {
-					sendStageStatus("Build", "RUNNING", "npm installing...")
+					def cmd = "docker run --rm -v \$(pwd):/app -w /app ${NODE_BUILD_NAME} npm install"
 					try {
-						sh 'npm install' // 또는 mvn package
-						sendStageStatus("Build", "SUCCESS", "Successfully installed")
+						sh cmd
 						sendOverview("SUCCESS")
 					} catch (e) {
-						sendStageStatus("Build", "FAILURE", e.toString())
 						sendOverview("FAILURE")
 						error("Build failed")
 					}
@@ -97,13 +102,11 @@ pipeline {
 		stage('Build') {
 			steps {
 				script {
-					sendStageStatus("Build", "RUNNING", "npm run build")   
+					def cmd = "docker run --rm -v \$(pwd):/app -w /app ${NODE_BUILD_NAME} npm run build"
 					try {
-						sh 'npm run build' // 또는 mvn package
-						sendStageStatus("Build", "SUCCESS", "Successfully builded.")
+						sh cmd
 						sendOverview("SUCCESS")
 					} catch (e) {
-						sendStageStatus("Build", "FAILURE", e.toString())
 						sendOverview("FAILURE")
 						error("Build failed")
 					}
@@ -115,15 +118,42 @@ pipeline {
 		stage('Test') {
 			steps {
 				script {
-					sendStageStatus("Test", "RUNNING", "npm run test")   
+					def cmd = "docker run --rm -v \$(pwd):/app -w /app ${NODE_BUILD_NAME} npm run test"
 					try {
-							sh 'npm run test' // 또는 mvn package
-							sendStageStatus("Test", "SUCCESS", "Test Completed.")
-							sendOverview("SUCCESS")
+						sh cmd
+						sendOverview("SUCCESS")
 					} catch (e) {
-							sendStageStatus("Test", "FAILURE", e.toString())
-							sendOverview("FAILURE")
-							error("Test failed")
+						sendOverview("FAILURE")
+						error("Build failed")
+					}
+				}
+			}
+		}
+
+		// -------------------------------
+		stage('Image Create') {
+			when {
+				anyOf {
+					expression { env.BRANCH_NAME == "dev" }
+					expression { env.BRANCH_NAME == "main" }
+				}
+			}
+			steps {
+				script {
+					def targetImageName = "${DOCKER_IMAGE_NAME}-${BRANCH_NAME}"
+
+					// 1. docker-compose.yml 파일 내의 IMAGE_NAME_PLACEHOLDER를 실제 이미지 이름으로 치환
+					sh "sed -i 's|IMAGE_NAME_PLACEHOLDER|${targetImageName}:latest|g' docker-compose.yml"
+
+					def cmd = "docker build -t ${targetImageName}:${BUILD_NUMBER} -f Dockerfile ."
+					def aliasCmd = "docker tag ${targetImageName}:${BUILD_NUMBER} ${targetImageName}:latest"
+					try {
+						sh cmd
+						sh aliasCmd
+						sendOverview("SUCCESS")
+					} catch (e) {
+						sendOverview("FAILURE")
+						error("Build failed")
 					}
 				}
 			}
@@ -133,22 +163,17 @@ pipeline {
 		stage('Deploy') {
 			when {
 				anyOf {
-					branch 'dev'
-					branch 'main'
+					expression { env.BRANCH_NAME == "dev" }
+					expression { env.BRANCH_NAME == "main" }
 				}
 			}
 			steps {
-				echo '배포 스크립트 실행'
-				// 예: 로컬 서버에서 확인
 				script {
-					sendStageStatus("Deploy", "RUNNING", "Deploying...")
+					def cmd = "docker compose -f docker-compose.yml up -d --force-recreate"
 					try {
-						sh 'rm -rf /Users/duyong/프로젝트/HelloJenkins/deploy/frontend/*'
-						sh 'cp -r dist/* /Users/duyong/프로젝트/HelloJenkins/deploy/frontend/'
-						sendStageStatus("Deploy", "SUCCESS", "Successfully Deployed!!")
+						sh cmd
 						sendOverview("SUCCESS")
 					} catch (e) {
-						sendStageStatus("Deploy", "FAILURE", e.toString())
 						sendOverview("FAILURE")
 						error("Build failed")
 					}
@@ -202,38 +227,6 @@ pipeline {
 // Stage 단위 이벤트 전송
 import groovy.json.JsonOutput
 
-
-def sendStageStatus(String stageName, String status, String command) {
-    def branchName = env.BRANCH_NAME ?: sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
-	def logs = sh(script: "${command} 2>&1 | tee /dev/tty", returnStdout: true).trim()
-    try {
-        // sh 실행 + stdout/stderr 모두 capture
-        status = "SUCCESS"
-    } catch (e) {
-        logs = e.toString()
-        status = "FAILURE"
-    }
-
-    // 로그 안전하게 escape
-    def safeLogs = logs.replace('"', '\\"')
-
-    def payload = [
-        jobName     : env.JOB_NAME,
-        branch      : branchName,
-        buildNumber : env.BUILD_NUMBER,
-        stage       : stageName,
-        status      : status,
-        logs        : safeLogs
-    ]
-
-    // 외부 API 전송
-    sh """
-        curl -X POST ${env.SPRING_API} \
-            -H "Content-Type: application/json" \
-            -d '${JsonOutput.toJson(payload)}'
-    """
-}
-
 // -------------------------------
 // 전체 Pipeline Overview 전송 
 def sendOverview(String status) {
@@ -257,36 +250,15 @@ def sendOverview(String status) {
                 TREE_JSON=\$(curl -s -u "\$JENKINS_USER:\$JENKINS_TOKEN" -H "Jenkins-Crumb:\$CRUMB" \
                     "\${JENKINS_URL}job/\$FINAL_JOB_NAME/\$BUILD/pipeline-overview/tree" || true)
 
-                # 4) 각 Node 로그 가져오기
-                NODE_IDS=\$(echo "\$TREE_JSON" | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p')
-                LOGS_JSON="["
-                FIRST=true
-
-                for NODE in \$NODE_IDS; do
-                    NODE_LOG=\$(curl -s -u "\$JENKINS_USER:\$JENKINS_TOKEN" -H "Jenkins-Crumb:\$CRUMB" \
-                        "\${JENKINS_URL}job/\$FINAL_JOB_NAME/\$BUILD/pipeline-overview/consoleOutput?nodeId=\$NODE" || true)
-
-                    # 로그 안의 따옴표, 역슬래시, 줄바꿈 escape
-                    ESCAPED_LOG=\$(printf '%s' "\$NODE_LOG" | sed ':a;N;\$!ba;s/\\\\/\\\\\\\\/g;s/"/\\\\"/g;s/\$/\\\\n/g')
-
-                    if [ "\$FIRST" = true ]; then
-                        LOGS_JSON="\$LOGS_JSON{\\\"id\\\": \\"\$NODE\\", \\"log\\": "\$ESCAPED_LOG"}"
-                        FIRST=false
-                    else
-                        LOGS_JSON="\$LOGS_JSON, {\\"id\\": \\"\$NODE\\", \\"log\\": "\$ESCAPED_LOG"}"
-                    fi
-                done
-                LOGS_JSON="\$LOGS_JSON]"
-
-                # 5) 전체 빌드 로그 조회 및 Base64 인코딩
+                # 4) 전체 빌드 로그 조회 및 Base64 인코딩
                 TOTAL_LOG_RAW=\$(curl -s -u "\$JENKINS_USER:\$JENKINS_TOKEN" -H "Jenkins-Crumb:\$CRUMB" \
                     "\${JENKINS_URL}job/\$FINAL_JOB_NAME/\$BUILD/logText/progressiveText")
 
-                # 5.1) Base64 인코딩: 줄바꿈 문자를 제거하지 않고 인코딩하여 안전하게 처리
+                # 4.1) Base64 인코딩: 줄바꿈 문자를 제거하지 않고 인코딩하여 안전하게 처리
                 # Mac/BSD base64와 GNU/Linux base64는 옵션이 다를 수 있으므로, pipe를 통해 처리
                 BASE64_TOTAL_LOG=\$(printf '%s' "\$TOTAL_LOG_RAW" | base64)
 
-                # 6) Payload 생성 (heredoc 사용 → JSON 표준 준수)
+                # 5) Payload 생성 (heredoc 사용 → JSON 표준 준수)
                 PAYLOAD=\$(cat <<EOF
                     {
                         "jobName": "${env.JOB_NAME}",
@@ -294,16 +266,15 @@ def sendOverview(String status) {
                         "branchName": "${env.BRANCH_NAME}",
                         "status": "${status}",
                         "tree": \$TREE_JSON,
-                        "logs": \$LOGS_JSON,
                         "totalLog": "\$BASE64_TOTAL_LOG"
                     }
                 EOF
                 )
 
                 # 6) Payload 확인
-                # echo "==============================="
-                # echo "\$PAYLOAD"
-                # echo "==============================="
+                #echo "==============================="
+                #echo "\$PAYLOAD"
+                #echo "==============================="
 
                 # 7) 외부 API 전송
                 curl -X POST "${env.SPRING_API}/overview" \
@@ -312,6 +283,6 @@ def sendOverview(String status) {
             """
         }
     } catch (err) {
-        echo "Overview send failed: ${err}"
+        echo "Overview send failed: ${err}" 
     }
 }
