@@ -77,38 +77,67 @@ pipeline {
 			}
 		}
 
+    	// -------------------------------
+		stage('Install') {
+			when {
+				anyOf {
+					expression { env.BRANCH_NAME != null }
+				}
+			}
+			steps {
+				script {
+					def cmd = "docker run --rm -v \$(pwd):/app -w /app ${NODE_BUILD_NAME} npm install"
+					try {
+						sh cmd
+						sendOverview("SUCCESS")
+					} catch (e) {
+						sendOverview("FAILURE")
+						error("Build failed")
+					}
+				}
+			}
+		}
+
+    	// -------------------------------
+		stage('Test') {
+			steps {
+				script {
+					def cmd = "docker run --rm -v \$(pwd):/app -w /app ${NODE_BUILD_NAME} npm run test"
+					try {
+						sh cmd
+						sendOverview("SUCCESS")
+					} catch (e) {
+						sendOverview("FAILURE")
+						error("Build failed")
+					}
+				}
+			}
+		}
+
 		// -------------------------------
 		stage('Image Create') {
 			when {
 				anyOf {
 					expression { env.BRANCH_NAME == "dev" }
 					expression { env.BRANCH_NAME == "main" }
-					expression { env.BRANCH_NAME == "local" } // local 브랜치도 테스트를 위해 이미지 생성 허용
 				}
 			}
 			steps {
 				script {
 					def targetImageName = "${DOCKER_IMAGE_NAME}-${BRANCH_NAME}"
-					def latestTag = "${targetImageName}:latest"
 
 					// 1. docker-compose.yml 파일 내의 IMAGE_NAME_PLACEHOLDER를 실제 이미지 이름으로 치환
-					// Mac에서는 sed -i '' 's/.../...' 형식이 필요합니다.
-					sh "sed -i '' 's|IMAGE_NAME_PLACEHOLDER|${latestTag}|g' docker-compose.yml"
+					sh "sed -i 's|IMAGE_NAME_PLACEHOLDER|${targetImageName}:latest|g' docker-compose.yml"
 
-					// 2. Docker 빌드 명령어에 캐시 활용 옵션 추가
-					// 이전의 :latest 이미지를 캐시 소스로 사용
-					def buildCmd = "docker build --cache-from ${latestTag} -t ${targetImageName}:${BUILD_NUMBER} -f Dockerfile ."
-					def tagCmd = "docker tag ${targetImageName}:${BUILD_NUMBER} ${latestTag}"
-					
+					def cmd = "docker build -t ${targetImageName}:${BUILD_NUMBER} -f Dockerfile ."
+					def aliasCmd = "docker tag ${targetImageName}:${BUILD_NUMBER} ${targetImageName}:latest"
 					try {
-                        echo "Building Docker image with cache from ${latestTag}..."
-						sh buildCmd
-                        echo "Tagging image as ${latestTag} for future caching..."
-						sh tagCmd
+						sh cmd
+						sh aliasCmd
 						sendOverview("SUCCESS")
 					} catch (e) {
 						sendOverview("FAILURE")
-						error("Image Create failed: ${e}")
+						error("Build failed")
 					}
 				}
 			}
