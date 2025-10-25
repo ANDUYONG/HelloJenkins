@@ -149,12 +149,14 @@ pipeline {
 					def serviceName = "${DOCKER_IMAGE_NAME}-${BRANCH_NAME}"
 					def port = ""
 					
-					if (env.BRANCH_NAME == "dev" || env.BRANCH_NAME == "local") {
+					if (env.BRANCH_NAME == "dev") {
 						port = "8081"
 					} else if (env.BRANCH_NAME == "main") {
 						port = "80"
+					} else if (env.BRANCH_NAME == "local") {
+						port = "8082"
 					}
-					
+
 					echo "서비스 이름: ${serviceName}"
 					echo "서비스 포트: ${port}"
 
@@ -177,6 +179,7 @@ pipeline {
 					def aliasCmd = "docker tag ${serviceName}:${BUILD_NUMBER} ${serviceName}:latest"
 
 					env.SERVICE_NAME = serviceName
+					env.DEPLOY_PORT = port
 					try {
 						sh cmd
 						sh aliasCmd
