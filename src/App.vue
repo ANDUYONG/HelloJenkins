@@ -9,6 +9,7 @@ import { ref } from 'vue';
   )
   const buildNumber = 42
   const iframeUrl = ref(`/api/jenkins/pipeline-overview/${buildNumber}`)
+  const gg = 
 </script>
 
 <template>
