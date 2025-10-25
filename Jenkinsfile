@@ -288,11 +288,33 @@ def sendOverview(String status) {
                 TOTAL_LOG_RAW=\$(curl -s -u "\$JENKINS_USER:\$JENKINS_TOKEN" -H "Jenkins-Crumb:\$CRUMB" \
                     "\${JENKINS_URL}job/\$FINAL_JOB_NAME/\$BUILD/logText/progressiveText")
 
+
                 # 4.1) Base64 인코딩: 줄바꿈 문자를 제거하지 않고 인코딩하여 안전하게 처리
                 # Mac/BSD base64와 GNU/Linux base64는 옵션이 다를 수 있으므로, pipe를 통해 처리
                 BASE64_TOTAL_LOG=\$(printf '%s' "\$TOTAL_LOG_RAW" | base64)
 
-                # 5) Payload 생성 (heredoc 사용 → JSON 표준 준수)
+                # 5) 각 Node 로그 가져오기
+                NODE_IDS=\$(echo "\$TREE_JSON" | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p')
+                LOGS_JSON="["
+                FIRST=true
+
+                for NODE in \$NODE_IDS; do
+                    NODE_LOG=\$(curl -s -u "\$JENKINS_USER:\$JENKINS_TOKEN" -H "Jenkins-Crumb:\$CRUMB" \
+                        "\${JENKINS_URL}job/\$FINAL_JOB_NAME/\$BUILD/pipeline-overview/consoleOutput?nodeId=\$NODE" || true)
+
+                    # 로그 안의 따옴표, 역슬래시, 줄바꿈 escape
+                    ESCAPED_LOG=\$(printf '%s' "\$NODE_LOG" | sed ':a;N;\$!ba;s/\\\\/\\\\\\\\/g;s/"/\\\\"/g;s/\$/\\\\n/g')
+
+                    if [ "\$FIRST" = true ]; then
+                        LOGS_JSON="\$LOGS_JSON{\\\"id\\\": \\"\$NODE\\", \\"log\\": "\$ESCAPED_LOG"}"
+                        FIRST=false
+                    else
+                        LOGS_JSON="\$LOGS_JSON, {\\"id\\": \\"\$NODE\\", \\"log\\": "\$ESCAPED_LOG"}"
+                    fi
+                done
+                LOGS_JSON="\$LOGS_JSON]"
+
+                # 6) Payload 생성 (heredoc 사용 → JSON 표준 준수)
                 PAYLOAD=\$(cat <<EOF
                     {
                         "jobName": "${env.JOB_NAME}",
@@ -300,6 +322,7 @@ def sendOverview(String status) {
                         "branchName": "${env.BRANCH_NAME}",
                         "status": "${status}",
                         "tree": \$TREE_JSON,
+						"logs": \$LOGS_JSON,
                         "totalLog": "\$BASE64_TOTAL_LOG"
                     }
                 EOF
