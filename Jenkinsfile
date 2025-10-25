@@ -126,8 +126,14 @@ pipeline {
 				script {
 					def targetImageName = "${DOCKER_IMAGE_NAME}-${BRANCH_NAME}"
 
-					// 1. docker-compose.yml 파일 내의 IMAGE_NAME_PLACEHOLDER를 실제 이미지 이름으로 치환
-					sh "sed -i 's|IMAGE_NAME_PLACEHOLDER|${targetImageName}:latest|g' docker-compose.yml"
+					// 1. Groovy를 사용하여 docker-compose.yml 파일 내용을 읽기
+                    def composeContent = readFile('docker-compose.yml')
+
+                    // 2. Groovy의 replaceAll 함수를 사용
+                    def modifiedContent = composeContent.replaceAll('IMAGE_NAME_PLACEHOLDER', "${DOCKER_IMAGE_NAME}-${BRANCH_NAME}:latest")
+
+                    // 3. 수정된 내용을 다시 파일에 씁니다.
+                    writeFile(file: 'docker-compose.yml', text: modifiedContent)
 
 					def cmd = "docker build -t ${targetImageName}:${BUILD_NUMBER} -f Dockerfile ."
 					def aliasCmd = "docker tag ${targetImageName}:${BUILD_NUMBER} ${targetImageName}:latest"
