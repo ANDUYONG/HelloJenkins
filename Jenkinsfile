@@ -154,6 +154,8 @@ pipeline {
 						env.DEPLOY_PORT = "80"
 					} 
 
+					def composeContent = readFile('docker-compose.yml') // 값을 할당
+
 					// 1. Groovy의 replaceAll 함수를 사용
                     // 1.1. 서비스 이름/컨테이너 이름 대체 (필수)
                     def modifiedContent = composeContent.replaceAll('SERVICE_NAME_PLACEHOLDER', env.SERVICE_NAME)
