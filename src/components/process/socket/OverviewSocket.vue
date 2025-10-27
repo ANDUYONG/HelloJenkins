@@ -13,7 +13,7 @@ const connected = ref(false);
 function connect() {
   if (ws.value && ws.value.readyState === WebSocket.OPEN) return;
 
-  ws.value = new WebSocket('ws://localhost:8092/ws/overview'); // 서버 주소 확인
+  ws.value = new WebSocket('ws://61.81.49.136:8092/ws/overview'); // 서버 주소 확인
   ws.value.onopen = () => {
     console.log('[OverviewSocket] connected');
     connected.value = true;
