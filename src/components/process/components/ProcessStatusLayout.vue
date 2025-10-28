@@ -8,7 +8,7 @@ const { isTotal } = defineProps<ProcessStatusLayoutProps>()
 <template>
     <div class="flex flex-col p-[10px] size-full process-layout-container">
         <div class="flex flex-col">
-            <div class="flex grow h-[50px] internal-area-bottom-border">
+            <div class="flex grow h-[40px] internal-area-bottom-border">
                 <slot name="BranchTab"></slot>
             </div>
         </div>

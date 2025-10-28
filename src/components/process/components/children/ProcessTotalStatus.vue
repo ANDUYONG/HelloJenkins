@@ -103,7 +103,7 @@ const getStatusTextColor = (status: string): string => {
     height: 100%;
     padding: 10px;
     box-sizing: border-box;
-    gap: 8px; 
+    gap: 3px; 
 }
 
 .branch-status-item {
@@ -117,7 +117,7 @@ const getStatusTextColor = (status: string): string => {
     font-weight: bold;
     text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
     transition: background-color 0.3s, opacity 0.3s; 
-    min-height: 40px; 
+    min-height: 20px; 
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 

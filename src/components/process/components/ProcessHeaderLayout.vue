@@ -3,7 +3,7 @@
     <div class="flex flex-col p-[10px] size-full process-layout-container">
         <div class="flex flex-col flex-2 internal-area-bottom-border">
             <div class="flex flex-row flex-2">
-                <div class="flex-1">
+                <div class="flex-1 hj-header-title">
                     <slot name="TopLeft"></slot>
                 </div>
                 <div class="flex-1 internal-area-left-border">
@@ -24,16 +24,25 @@
                 <slot name="Header"></slot>
             </div>
 
-            <div class="basis-3/4">
+            <div class="basis-2/4 internal-area-right-border">
                 <slot name="Content"></slot>
             </div>
+
+            <div class="basis-1/4">
+                <slot name="Reference"></slot>
+            </div>
         </div>
-        <div class="flex flex-1 internal-area-top-border footer-area">
+        <div class="flex flex-1 internal-area-top-border">
             <slot name="Footer"></slot>
         </div>
     </div>
 </template>
 <style scoped>
+.hj-header-title {
+    font-size: large;
+    font-weight: bold;
+}
+
 .process-layout-container {
     font-family: Arial, sans-serif;
     color: #333;
@@ -59,9 +68,9 @@
 }
 /* 추가 스타일링 */
 .sub-title-area h3 {
-    font-size: 1.1em;
+    font-size: 0.9em;
     font-weight: 500;
-    color: #555;
+    color: #676666;
     margin: 0;
 }
 </style>
