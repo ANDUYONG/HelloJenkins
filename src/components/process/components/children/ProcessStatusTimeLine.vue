@@ -155,8 +155,8 @@ const pipelineStatus = computed(() => {
 }
 
 .timeline-header {
-    margin-bottom: 20px;
-    padding-bottom: 10px;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
     border-bottom: 1px solid #e0e0e0;
     flex-shrink: 0;
 }
@@ -171,8 +171,8 @@ const pipelineStatus = computed(() => {
     justify-content: center; 
     flex-grow: 1; 
     overflow-x: auto; 
-    padding-bottom: 10px;
-    padding-top: 10px; /* 아이콘 중앙 정렬을 위한 여유 공간 확보 */
+    padding-bottom: 5px;
+    padding-top: 5px; /* 아이콘 중앙 정렬을 위한 여유 공간 확보 */
 }
 
 .timeline-stage-item-horizontal {
@@ -183,7 +183,7 @@ const pipelineStatus = computed(() => {
     padding: 0 5px; 
     flex-shrink: 1; /* 축소 가능 */
     flex-grow: 1; /* 균등하게 확장 */
-    min-width: 80px; /* 최소 너비 */
+    min-width: 50px; /* 최소 너비 */
     text-align: center;
 }
 

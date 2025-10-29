@@ -281,17 +281,17 @@ provide('process', data)
 </script>
 <template>
     <div class="jenkins-blue-ocean-light-container flex flex-col h-screen w-screen gap-[15px]">
-        <div class="flex h-[350px]">
+        <div class="flex h-auto">
             <div class="jenkins-card">
                 <slot name="Header"></slot>
             </div>
         </div>
-        <div class="flex h-[350px]">
+        <div class="flex">
             <div class="jenkins-card">
                 <slot :props="propsSender.status" name="Status"></slot>
             </div>
         </div>
-        <div class="flex flex-1 h-[400px] overflow-hidden">
+        <div class="flex flex-1">
             <div class="jenkins-card">
                 <div>
                     <slot :props="propsSender.log" name="Log"></slot>
@@ -312,6 +312,7 @@ provide('process', data)
     height: 100vh; /* 뷰포트 전체 높이 */
     width: 100%;
     padding: 15px; /* 전체 영역에 여백 추가 */
+    overflow-y: auto;
 }
 
 /* 각각의 영역(Header, Status, Log)을 위한 Card 스타일 */
@@ -322,6 +323,5 @@ provide('process', data)
     /* 입체적인 효과를 위한 그림자: 약간 뜨는 느낌 */
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.05);
     width: 100%;
-    overflow: hidden; /* 내부 컨텐츠가 Card 밖으로 나가지 않도록 */
 }
 </style>
