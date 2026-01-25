@@ -183,8 +183,6 @@ pipeline {
                     } else {
                         // Windows: Pure PowerShell 배포 (예시: 백그라운드 프로세스 실행)
                         powershell """
-						# 젠킨스가 자식 프로세스를 추적하지 못하게 ID를 가짜로 바꿈
-                			\$env:BUILD_ID = "dontKillMe"
 							# 1. 기존 동일 이름 서비스 종료
 							# pm2 delete ${env.SERVICE_NAME} 2> \$null
 
