@@ -203,19 +203,23 @@ pipeline {
 	// -------------------------------
 	post {
 		success {
-			echo "Pipeline succeeded"
-			if (isUnix()) {
-				sh "curl -X POST ${SPRING_API} -H 'Content-Type: application/json' -d '{\"jobName\":\"${JOB_NAME}\",\"buildNumber\":\"${BUILD_NUMBER}\",\"status\":\"SUCCESS\"}'"
-			} else {
-				powershell "Invoke-RestMethod -Uri '${SPRING_API}' -Method Post -ContentType 'application/json' -Body (@{jobName='${JOB_NAME}'; buildNumber='${BUILD_NUMBER}'; status='SUCCESS'} | ConvertTo-Json)"
+			script {
+				echo "Pipeline succeeded"
+				if (isUnix()) {
+					sh "curl -X POST ${SPRING_API} -H 'Content-Type: application/json' -d '{\"jobName\":\"${JOB_NAME}\",\"buildNumber\":\"${BUILD_NUMBER}\",\"status\":\"SUCCESS\"}'"
+				} else {
+					powershell "Invoke-RestMethod -Uri '${SPRING_API}' -Method Post -ContentType 'application/json' -Body (@{jobName='${JOB_NAME}'; buildNumber='${BUILD_NUMBER}'; status='SUCCESS'} | ConvertTo-Json)"
+				}
 			}
 		}
 		failure {
-			echo "빌드 실패"
-			if (isUnix()) {
-				sh "curl -X POST ${SPRING_API} -H 'Content-Type: application/json' -d '{\"jobName\":\"${JOB_NAME}\",\"buildNumber\":\"${BUILD_NUMBER}\",\"status\":\"FAILURE\"}'"
-			} else {
-				powershell "Invoke-RestMethod -Uri '${SPRING_API}' -Method Post -ContentType 'application/json' -Body (@{jobName='${JOB_NAME}'; buildNumber='${BUILD_NUMBER}'; status='FAILURE'} | ConvertTo-Json)"
+			script {
+				echo "빌드 실패"
+				if (isUnix()) {
+					sh "curl -X POST ${SPRING_API} -H 'Content-Type: application/json' -d '{\"jobName\":\"${JOB_NAME}\",\"buildNumber\":\"${BUILD_NUMBER}\",\"status\":\"FAILURE\"}'"
+				} else {
+					powershell "Invoke-RestMethod -Uri '${SPRING_API}' -Method Post -ContentType 'application/json' -Body (@{jobName='${JOB_NAME}'; buildNumber='${BUILD_NUMBER}'; status='FAILURE'} | ConvertTo-Json)"
+				}
 			}
 		}
 
