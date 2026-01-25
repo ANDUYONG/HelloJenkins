@@ -189,7 +189,7 @@ pipeline {
 							# 2. 포트 환경변수를 주입하며 실행
 							# (애플리케이션 코드에서 process.env.PORT를 읽어야 함)
 							\$env:PORT = "${port}"
-							pm2 start npm --name "${env.SERVICE_NAME}" -- run start
+							pm2 start "npm" --name "${env.SERVICE_NAME}" -- run start
 							
 							# 3. 상태 저장 (재부팅 시 자동 실행 설정이 되어있을 경우)
 							pm2 save
