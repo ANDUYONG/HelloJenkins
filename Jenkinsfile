@@ -247,16 +247,16 @@ pipeline {
                     } else {
                         // --- Windows / Pure PowerShell 환경 ---
                         // PowerShell은 큰 따옴표 안에 Base64 문자열을 넣을 때 줄바꿈이 있어도 안전하게 처리합니다.
-                        powershell """
-                        \$payload = @{
-                            jobName     = "${JOB_NAME}"
-                            buildNumber = [int]"${BUILD_NUMBER}"
-                            status      = "COMPLETED"
-                            logs        = "${encodedLogs}"
-                        } | ConvertTo-Json
+                        // powershell """
+                        // \$payload = @{
+                        //     jobName     = "${JOB_NAME}"
+                        //     buildNumber = [int]"${BUILD_NUMBER}"
+                        //     status      = "COMPLETED"
+                        //     logs        = "${encodedLogs}"
+                        // } | ConvertTo-Json
                         
-                        Invoke-RestMethod -Uri "${SPRING_API}" -Method Post -ContentType "application/json" -Body \$payload
-                        """
+                        // Invoke-RestMethod -Uri "${SPRING_API}" -Method Post -ContentType "application/json" -Body \$payload
+                        // """
                     }
 
                     // 2. 상세 Overview 전송 (앞서 수정한 분기 함수 호출)
