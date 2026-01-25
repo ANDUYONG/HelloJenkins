@@ -46,11 +46,11 @@ pipeline {
 		// ------------------------------- 
 		stage('Merge') {
 			when {
-				anyOf {
+				// anyOf {
 					expression { env.BRANCH_NAME.startsWith("feature/") }
 					expression { env.BRANCH_NAME == "dev" }
 					expression { env.BRANCH_NAME == "local" }
-				}
+				// }
 			}
 			steps {
 				script {
@@ -95,9 +95,9 @@ pipeline {
     	// -------------------------------
 		stage('Install') {
 			when {
-				anyOf {
+				// anyOf {
 					expression { env.BRANCH_NAME != null }
-				}
+				// }
 			}
 			steps {
 				script {
@@ -245,11 +245,11 @@ pipeline {
 		// }
 		stage('Deploy') {
             when {
-                anyOf {
+                // anyOf {
                     expression { env.BRANCH_NAME == "dev" }
                     expression { env.BRANCH_NAME == "main" } [cite: 4]
                     expression { env.BRANCH_NAME == "local" }
-                }
+                // }
             }
             steps {
                 script {
