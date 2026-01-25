@@ -156,93 +156,6 @@ pipeline {
 				}
 			}
 		}
-
-		// -------------------------------
-		// stage('Image Create') {
-		// 	when {
-		// 		anyOf {
-		// 			expression { env.BRANCH_NAME == "dev" }
-		// 			expression { env.BRANCH_NAME == "main" }
-		// 			expression { env.BRANCH_NAME == "local" }
-		// 			expression { isUnix() == true }
-		// 		}
-		// 	}
-		// 	steps {
-		// 		script {
-		// 			// 배포 포트 및 서비스 이름 결정 
-		// 			def port = ""
-					
-		// 			if (env.BRANCH_NAME == "dev") {
-		// 				port = "8081"
-		// 			} else if (env.BRANCH_NAME == "main") {
-		// 				port = "80"
-		// 			} else if (env.BRANCH_NAME == "local") {
-		// 				port = "8082"
-		// 			}
-
-		// 			echo "서비스 이름: ${env.SERVICE_NAME}"
-		// 			echo "서비스 포트: ${port}"
-
-		// 			def composeContent = readFile('docker-compose.yml') // 값을 할당
-
-		// 			// 1. Groovy의 replaceAll 함수를 사용
-        //             // 1.1. 서비스 이름/컨테이너 이름 대체 (필수)
-        //             def modifiedContent = composeContent.replaceAll('SERVICE_NAME_PLACEHOLDER', env.SERVICE_NAME)
-                    
-        //             // 1.2. 이미지 태그 대체
-        //             modifiedContent = modifiedContent.replaceAll('IMAGE_NAME_PLACEHOLDER', "${env.SERVICE_NAME}:latest")
-                    
-        //             // 1.3. 호스트 포트 대체
-        //             modifiedContent = modifiedContent.replaceAll('HOST_PORT_PLACEHOLDER', port)
-                    
-        //             // 2. 수정된 내용을 다시 파일에 작성
-        //             writeFile(file: 'docker-compose.yml', text: modifiedContent)
-
-		// 			def cmd = "docker build -t ${env.SERVICE_NAME}:${BUILD_NUMBER} -f Dockerfile ."
-		// 			def aliasCmd = "docker tag ${env.SERVICE_NAME}:${BUILD_NUMBER} ${env.SERVICE_NAME}:latest"
-		// 			try {
-		// 				sh cmd
-		// 				sh aliasCmd
-		// 				sendOverview("SUCCESS")
-		// 			} catch (e) {
-		// 				sendOverview("FAILURE")
-		// 				error("Build failed")
-		// 			}
-		// 		}
-		// 	}
-		// }
-
-    	// -------------------------------
-		// stage('Deploy') {
-		// 	when {
-		// 		anyOf {
-		// 			expression { env.BRANCH_NAME == "dev" }
-		// 			expression { env.BRANCH_NAME == "main" }
-		// 			expression { env.BRANCH_NAME == "local" }
-		// 		}
-		// 	}
-		// 	steps {
-		// 		script {
-		// 			// 1. 기존 컨테이너를 중지하고 제거 (포트 충돌 방지 및 새 이미지로 교체)
-		// 			sh "docker compose -f docker-compose.yml stop ${env.SERVICE_NAME} || true"
-		// 			sh "docker compose -f docker-compose.yml rm -f ${env.SERVICE_NAME} || true"
-
-		// 			// 2. 새로운 컨테이너를 해당 서비스 이름으로만 up 시킵니다.
-		// 			def cmd = "docker compose -f docker-compose.yml up -d --force-recreate ${env.SERVICE_NAME}"
-		// 			try {
-		// 				if(isUnix()) {
-		// 					sh cmd
-		// 				} else {
-
-		// 				}
-		// 				sendOverview("SUCCESS")
-		// 			} catch (e) {
-		// 				sendOverview("FAILURE")
-		// 				error("Build failed")
-		// 			}
-		// 		}
-		// 	}
-		// }
 		stage('Deploy') {
             when {
                 anyOf {
@@ -296,12 +209,6 @@ pipeline {
 			} else {
 				powershell "Invoke-RestMethod -Uri '${SPRING_API}' -Method Post -ContentType 'application/json' -Body (@{jobName='${JOB_NAME}'; buildNumber='${BUILD_NUMBER}'; status='SUCCESS'} | ConvertTo-Json)"
 			}
-			// sh """
-			// # 성공 이벤트 전송
-			// curl -X POST ${SPRING_API} \
-			//      -H 'Content-Type: application/json' \
-			//      -d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"SUCCESS"}'
-			// """
 		}
 		failure {
 			echo "빌드 실패"
@@ -310,12 +217,6 @@ pipeline {
 			} else {
 				powershell "Invoke-RestMethod -Uri '${SPRING_API}' -Method Post -ContentType 'application/json' -Body (@{jobName='${JOB_NAME}'; buildNumber='${BUILD_NUMBER}'; status='FAILURE'} | ConvertTo-Json)"
 			}
-			// 실패 이벤트 전송
-			// sh """
-           	// 	curl -X POST ${SPRING_API} \
-            //     	     -H 'Content-Type: application/json' \
-            //     	     -d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"FAILURE"}'
-           	// 	"""
 		}
 
 		always {
@@ -361,24 +262,6 @@ pipeline {
                 }
             }
         }
-		// always {
-		// 	echo "빌드 완료"
-		// 	script {
-		// 		try {
-		// 			def logs = currentBuild.rawBuild.getLog(999999).join("\n")
-		// 			def encodedLogs = logs.bytes.encodeBase64().toString()
-		// 			sh """
-		// 			curl -X POST ${SPRING_API} \
-		// 				 -H 'Content-Type: application/json' \
-		// 				 -d '{"jobName":"${JOB_NAME}","buildNumber":"${BUILD_NUMBER}","status":"COMPLETED","logs":"${encodedLogs}"}' || true
-		// 			"""
-
-		// 			sendOverview(env.BRANCH_STATUS)
-		// 		} catch (e) {
-		// 			echo "always block 에러: ${e}"
-		// 		}
-		// 	}
-		// }
 	}
 }
 
