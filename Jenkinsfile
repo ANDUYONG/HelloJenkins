@@ -247,25 +247,25 @@ pipeline {
             when {
                 anyOf {
                     expression { env.BRANCH_NAME == "dev" }
-                    expression { env.BRANCH_NAME == "main" } [cite: 4]
+                    expression { env.BRANCH_NAME == "main" }
                     expression { env.BRANCH_NAME == "local" }
                 }
             }
             steps {
                 script {
-                    def port = (env.BRANCH_NAME == "main") ? "80" : (env.BRANCH_NAME == "dev" ? "8081" : "8082") [cite: 4]
+                    def port = (env.BRANCH_NAME == "main") ? "80" : (env.BRANCH_NAME == "dev" ? "8081" : "8082")
                     
                     if (isUnix()) {
                         // Linux: Docker Compose 배포
                         def composeContent = readFile('docker-compose.yml')
-                        def modifiedContent = composeContent.replaceAll('SERVICE_NAME_PLACEHOLDER', env.SERVICE_NAME) [cite: 5]
-                        modifiedContent = modifiedContent.replaceAll('IMAGE_NAME_PLACEHOLDER', "${env.SERVICE_NAME}:latest") [cite: 6]
-                        modifiedContent = modifiedContent.replaceAll('HOST_PORT_PLACEHOLDER', port) [cite: 7]
+                        def modifiedContent = composeContent.replaceAll('SERVICE_NAME_PLACEHOLDER', env.SERVICE_NAME)
+                        modifiedContent = modifiedContent.replaceAll('IMAGE_NAME_PLACEHOLDER', "${env.SERVICE_NAME}:latest")
+                        modifiedContent = modifiedContent.replaceAll('HOST_PORT_PLACEHOLDER', port)
                         writeFile(file: 'docker-compose.yml', text: modifiedContent)
 
-                        sh "docker build -t ${env.SERVICE_NAME}:${BUILD_NUMBER} -f Dockerfile ." [cite: 8]
+                        sh "docker build -t ${env.SERVICE_NAME}:${BUILD_NUMBER} -f Dockerfile ."
                         sh "docker tag ${env.SERVICE_NAME}:${BUILD_NUMBER} ${env.SERVICE_NAME}:latest"
-                        sh "docker compose -f docker-compose.yml up -d --force-recreate ${env.SERVICE_NAME}" [cite: 9]
+                        sh "docker compose -f docker-compose.yml up -d --force-recreate ${env.SERVICE_NAME}"
                     } else {
                         // Windows: Pure PowerShell 배포 (예시: 백그라운드 프로세스 실행)
                         powershell """
@@ -306,7 +306,7 @@ pipeline {
 		failure {
 			echo "빌드 실패"
 			if (isUnix()) {
-				sh "curl -X POST ${SPRING_API} -H 'Content-Type: application/json' -d '{\"jobName\":\"${JOB_NAME}\",\"buildNumber\":\"${BUILD_NUMBER}\",\"status\":\"FAILURE\"}'" [cite: 10]
+				sh "curl -X POST ${SPRING_API} -H 'Content-Type: application/json' -d '{\"jobName\":\"${JOB_NAME}\",\"buildNumber\":\"${BUILD_NUMBER}\",\"status\":\"FAILURE\"}'"
 			} else {
 				powershell "Invoke-RestMethod -Uri '${SPRING_API}' -Method Post -ContentType 'application/json' -Body (@{jobName='${JOB_NAME}'; buildNumber='${BUILD_NUMBER}'; status='FAILURE'} | ConvertTo-Json)"
 			}
