@@ -46,11 +46,11 @@ pipeline {
 		// ------------------------------- 
 		stage('Merge') {
 			when {
-				// anyOf {
+				anyOf {
 					expression { env.BRANCH_NAME.startsWith("feature/") }
 					expression { env.BRANCH_NAME == "dev" }
 					expression { env.BRANCH_NAME == "local" }
-				// }
+				}
 			}
 			steps {
 				script {
@@ -64,7 +64,7 @@ pipeline {
 							mergeTarget = "dev"
 						}
 
-						// git 명령어를 Docker 컨테이너 내에서 실행 
+						// git 명령어를 Docker 컨테이너 내에서 실행
 						if (mergeTarget) {
 							if(isUnix()) {
 								def fetchCmd = "docker run --rm -v \$(pwd):/git -w /git ${GIT_TOOL_IMAGE} fetch origin ${mergeTarget}"
@@ -95,9 +95,9 @@ pipeline {
     	// -------------------------------
 		stage('Install') {
 			when {
-				// anyOf {
+				anyOf {
 					expression { env.BRANCH_NAME != null }
-				// }
+				}
 			}
 			steps {
 				script {
@@ -245,11 +245,11 @@ pipeline {
 		// }
 		stage('Deploy') {
             when {
-                // anyOf {
+                anyOf {
                     expression { env.BRANCH_NAME == "dev" }
                     expression { env.BRANCH_NAME == "main" } [cite: 4]
                     expression { env.BRANCH_NAME == "local" }
-                // }
+                }
             }
             steps {
                 script {
