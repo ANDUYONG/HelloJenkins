@@ -278,7 +278,7 @@ pipeline {
 							pm2 start npm --name "${env.SERVICE_NAME}" -- start
 							
 							# 3. 상태 저장 (재부팅 시 자동 실행 설정이 되어있을 경우)
-							pm2 sa
+							pm2 save
                         """
                     }
                     sendOverview("SUCCESS")
