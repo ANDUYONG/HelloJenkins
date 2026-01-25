@@ -34,7 +34,7 @@ pipeline {
 						if(!isUnix()) {
 							checkout scm
 						}
-						sendOverview("SUCCESS")
+						// sendOverview("SUCCESS")
 					} catch(e) {
 						sendOverview("FAILURE")
 						error("Checkout failed: ${e}")
@@ -84,7 +84,7 @@ pipeline {
 							}
 						}
 
-						sendOverview("SUCCESS")
+						// sendOverview("SUCCESS")
 					} catch(e) {
 						sendOverview("FAILURE")
 						error("Merge failed: ${e}")
@@ -109,7 +109,7 @@ pipeline {
 						} else {
 							powershell "npm install"
 						}
-						sendOverview("SUCCESS")
+						// sendOverview("SUCCESS")
 					} catch (e) {
 						sendOverview("FAILURE")
 						error("Build failed")
@@ -129,7 +129,7 @@ pipeline {
 						} else {
 							powershell "npm run build"
 						}
-						sendOverview("SUCCESS")
+						// sendOverview("SUCCESS")
 					} catch (e) {
 						sendOverview("FAILURE")
 						error("Build failed")
@@ -149,7 +149,7 @@ pipeline {
 						} else {
 							powershell "npm run build"
 						}
-						sendOverview("SUCCESS")
+						// sendOverview("SUCCESS")
 					} catch (e) {
 						sendOverview("FAILURE")
 						error("Build failed")
@@ -195,7 +195,7 @@ pipeline {
 							pm2 save
                         """
                     }
-                    sendOverview("SUCCESS")
+                    // sendOverview("SUCCESS")
                 }
             }
         }
