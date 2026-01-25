@@ -47,8 +47,8 @@ pipeline {
 		stage('Merge') {
 			when {
 				anyOf {
-					expression { env.BRANCH_NAME.startsWith("feature/") },
-					expression { env.BRANCH_NAME == "dev" },
+					expression { env.BRANCH_NAME.startsWith("feature/") }
+					expression { env.BRANCH_NAME == "dev" }
 					expression { env.BRANCH_NAME == "local" }
 				}
 			}
