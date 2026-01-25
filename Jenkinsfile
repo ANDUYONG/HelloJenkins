@@ -184,12 +184,15 @@ pipeline {
                         // Windows: Pure PowerShell 배포 (예시: 백그라운드 프로세스 실행)
                         powershell """
 							# 1. 기존 동일 이름 서비스 종료
-							pm2 delete ${env.SERVICE_NAME} 2> \$null
+							# pm2 delete ${env.SERVICE_NAME} 2> \$null
 
 							# 2. 포트 환경변수를 주입하며 실행
 							# (애플리케이션 코드에서 process.env.PORT를 읽어야 함)
 							\$env:PORT = "${port}"
-							pm2 start "npm" --name "${env.SERVICE_NAME}" -- run start 
+							# pm2 start "npm" --name "${env.SERVICE_NAME}" -- run start 
+
+							pm2 delete all
+							pm2 start pm2.config.js
 							
 							# 3. 상태 저장 (재부팅 시 자동 실행 설정이 되어있을 경우)
 							pm2 save
