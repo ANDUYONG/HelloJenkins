@@ -77,7 +77,7 @@ pipeline {
 								// Window Powershell
 								powershell """
 								git fetch origin ${mergeTarget}
-                                # git merge origin/${mergeTarget} --no-commit --no-ff
+                                # git merge origin/${mergeTarget} --no-commit --no-ff 
 								git merge FETCH_HEAD --no-commit --no-ff
                                 if (\$LASTEXITCODE -ne 0) { git merge --abort; Write-Host "Merge Conflict or No Change" }
 								"""
